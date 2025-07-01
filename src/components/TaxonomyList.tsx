@@ -2,6 +2,15 @@ import { useEffect, useState } from "react";
 import type { TaxonomyGraph } from "../types/taxonomy";
 import { fetchTaxonomyGraphs } from "../services/taxonomyService";
 import TaxonomyDetails from "./TaxonomyDetails";
+import {
+  Box,
+  Paper,
+  List,
+  ListItem,
+  ListItemText,
+  Typography,
+  CircularProgress,
+} from "@mui/material";
 
 const TaxonomyList: React.FC = () => {
   const [graphs, setGraphs] = useState<TaxonomyGraph[]>([]);
@@ -29,73 +38,52 @@ const TaxonomyList: React.FC = () => {
     loadGraphs();
   }, []);
 
-  if (isLoading) return <div className="p-4">Loading taxonomy graphs...</div>;
-  if (error) return <div className="p-4 text-red-600">Error: {error}</div>;
+  if (isLoading) return <CircularProgress />;
+  if (error) return <Typography color="error">Error: {error}</Typography>;
 
   return (
-    <div style={{ display: "flex", gap: "24px", position: "relative" }}>
+    <Box display="flex" gap={3}>
       {/* List Box */}
-      <div style={{ width: "400px", flexShrink: 0 }}>
-        <h2 className="text-lg font-semibold mb-2 px-2">Taxonomy Graphs</h2>
-        <div
-          style={{
-            border: "1px solid #ccc",
-            height: "500px",
-            backgroundColor: "white",
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          <div
-            style={{
-              overflowY: "auto",
-              flex: 1,
-            }}
-          >
+      <Box width={400}>
+        <Typography variant="h6" sx={{ mb: 1, px: 1 }}>
+          Taxonomy Graphs
+        </Typography>
+        <Paper elevation={1} sx={{ height: 500, overflow: "hidden" }}>
+          <List sx={{ height: "100%", overflow: "auto" }}>
             {graphs.map((graph) => (
-              <div
+              <ListItem
                 key={graph.graph_id}
-                className={`
-                  hover:bg-gray-50
-                  ${
-                    selectedGraph?.graph_id === graph.graph_id
-                      ? "bg-blue-50"
-                      : ""
-                  }
-                `}
-                style={{
-                  padding: "8px 12px",
-                  cursor: "pointer",
-                  borderBottom: "1px solid #eee",
-                  fontSize: "14px",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  textAlign: "left",
-                }}
+                selected={selectedGraph?.graph_id === graph.graph_id}
                 onClick={() => setSelectedGraph(graph)}
+                sx={{
+                  cursor: "pointer",
+                  borderBottom: "1px solid",
+                  borderColor: "divider",
+                }}
               >
-                {graph.name}
-              </div>
+                <ListItemText
+                  primary={graph.name}
+                  primaryTypographyProps={{
+                    noWrap: true,
+                    fontSize: 14,
+                  }}
+                />
+              </ListItem>
             ))}
-          </div>
-        </div>
-      </div>
+          </List>
+        </Paper>
+      </Box>
 
-      {/* Details Panel with Header */}
-      <div style={{ width: "600px", flexShrink: 0 }}>
-        <h2 className="text-lg font-semibold mb-2 px-2">Graph Details</h2>
-        <div
-          style={{
-            border: "1px solid #ccc",
-            height: "500px",
-            backgroundColor: "white",
-          }}
-        >
+      {/* Details Panel */}
+      <Box width={600}>
+        <Typography variant="h6" sx={{ mb: 1, px: 1 }}>
+          Graph Details
+        </Typography>
+        <Paper elevation={1} sx={{ height: 500 }}>
           <TaxonomyDetails selectedGraph={selectedGraph} />
-        </div>
-      </div>
-    </div>
+        </Paper>
+      </Box>
+    </Box>
   );
 };
 
