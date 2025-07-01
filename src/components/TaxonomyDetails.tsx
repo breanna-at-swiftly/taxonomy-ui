@@ -1,3 +1,13 @@
+import {
+  Box,
+  Typography,
+  Paper,
+  Grid,
+  Divider,
+  useTheme,
+  Card,
+  CardContent,
+} from "@mui/material";
 import type { TaxonomyGraph } from "../types/taxonomy";
 
 interface TaxonomyDetailsProps {
@@ -7,67 +17,87 @@ interface TaxonomyDetailsProps {
 export default function TaxonomyDetails({
   selectedGraph,
 }: TaxonomyDetailsProps) {
+  const theme = useTheme();
+
   if (!selectedGraph) {
     return (
-      <div style={{ padding: "10px" }}>
-        Select a taxonomy graph to view details
-      </div>
+      <Card>
+        <CardContent>
+          <Typography color="textSecondary" variant="body1">
+            Select a taxonomy graph to view details
+          </Typography>
+        </CardContent>
+      </Card>
     );
   }
 
-  const containerStyle = {
-    padding: "10px",
-    width: "100%",
-    textAlign: "left" as const,
-  };
-
-  const rowStyle = {
-    display: "flex",
-    alignItems: "flex-start",
-    width: "100%",
-    paddingLeft: "10px",
-  };
-
-  const labelStyle = {
-    width: "120px",
-    fontWeight: 600,
-    textAlign: "left" as const,
-  };
-
-  const valueStyle = {
-    flex: 1,
-    textAlign: "left" as const,
-  };
+  const DetailRow = ({
+    label,
+    value,
+  }: {
+    label: string;
+    value: React.ReactNode;
+  }) => (
+    <Grid item xs={12}>
+      <Box
+        display="flex"
+        alignItems="flex-start"
+        px={1}
+        py={0.5}
+        sx={{
+          "&:hover": {
+            backgroundColor: theme.palette.action.hover,
+          },
+        }}
+      >
+        <Typography
+          variant="subtitle2"
+          sx={{
+            width: 120,
+            fontWeight: 600,
+            textAlign: "left",
+            color: "text.secondary",
+          }}
+        >
+          {label}:
+        </Typography>
+        <Typography
+          variant="body1"
+          sx={{
+            ml: 2,
+            flex: 1,
+            wordBreak: "break-word",
+          }}
+        >
+          {value}
+        </Typography>
+      </Box>
+    </Grid>
+  );
 
   return (
-    <div style={containerStyle}>
-      <h2 className="text-xl font-bold mb-4" style={{ paddingLeft: "10px" }}>
-        {selectedGraph.name}
-      </h2>
-      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-        <div style={rowStyle}>
-          <span style={labelStyle}>ID:</span>
-          <span style={valueStyle}>{selectedGraph.graph_id}</span>
-        </div>
-        <div style={rowStyle}>
-          <span style={labelStyle}>Notes:</span>
-          <span style={valueStyle}>{selectedGraph.notes}</span>
-        </div>
-        <div style={rowStyle}>
-          <span style={labelStyle}>Root Node:</span>
-          <span style={valueStyle}>{selectedGraph.root_node_id}</span>
-        </div>
-        <div style={rowStyle}>
-          <span style={labelStyle}>Updated:</span>
-          <span style={valueStyle}>
-            {new Date(selectedGraph.updated_datetime).toLocaleString()}
-          </span>
-        </div>
-        <div style={rowStyle}>
-          <span style={labelStyle}>Updated By:</span>
-          <span style={valueStyle}>{selectedGraph.updated_by}</span>
-        </div>
-      </div>
-    </div>
+    <Card>
+      <CardContent>
+        <Typography
+          variant="h6"
+          gutterBottom
+          color="primary"
+          sx={{ fontWeight: "medium" }}
+        >
+          {selectedGraph.name}
+        </Typography>
+        <Divider sx={{ mb: 2 }} />
+        <Grid container spacing={2}>
+          <DetailRow label="ID" value={selectedGraph.graph_id} />
+          <DetailRow label="Notes" value={selectedGraph.notes || "-"} />
+          <DetailRow label="Root Node" value={selectedGraph.root_node_id} />
+          <DetailRow
+            label="Updated"
+            value={new Date(selectedGraph.updated_datetime).toLocaleString()}
+          />
+          <DetailRow label="Updated By" value={selectedGraph.updated_by} />
+        </Grid>
+      </CardContent>
+    </Card>
   );
 }
