@@ -11,6 +11,7 @@ import { useGraphs } from "../context/GraphContext";
 import { useGraphExport } from "../hooks/useGraphExport";
 import type { TaxonomyGraph } from "../types/taxonomy";
 import { BANNER_COLOR } from "../theme/theme";
+import TreeView from "./TreeView";
 
 export const GraphEditor: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -117,9 +118,7 @@ export const GraphEditor: React.FC = () => {
           <Typography>Select a graph to begin editing</Typography>
         ) : graphData ? (
           <Box sx={{ height: 600, border: 1, borderColor: "divider" }}>
-            <pre style={{ margin: 16, overflow: "auto" }}>
-              {JSON.stringify(graphData, null, 2)}
-            </pre>
+            <TreeView graphData={graphData} />
           </Box>
         ) : null}
       </Box>
