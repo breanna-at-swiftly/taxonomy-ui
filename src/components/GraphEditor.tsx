@@ -12,6 +12,7 @@ import { useGraphExport } from "../hooks/useGraphExport";
 import type { TaxonomyGraph } from "../types/taxonomy";
 import { BANNER_COLOR } from "../theme/theme";
 import TreeView from "./TreeView";
+import { ErrorBoundary } from "./shared/ErrorBoundary/ErrorBoundary";
 
 export const GraphEditor: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -36,13 +37,17 @@ export const GraphEditor: React.FC = () => {
 
   useEffect(() => {
     const loadGraphData = async () => {
-      if (!selectedGraph) return;
+      if (!selectedGraph) {
+        setGraphData(null);
+        return;
+      }
 
       try {
         const data = await fetchGraphData(selectedGraph.graph_id);
         setGraphData(data);
       } catch (err) {
         console.error("Failed to load graph data:", err);
+        // Consider adding error state handling
       }
     };
 
@@ -65,10 +70,6 @@ export const GraphEditor: React.FC = () => {
           borderBottom: 1,
           borderColor: "divider",
           bgcolor: BANNER_COLOR,
-          display: "flex",
-          alignItems: "center",
-          px: 2,
-          flexShrink: 0,
         }}
       >
         <Autocomplete
@@ -76,6 +77,14 @@ export const GraphEditor: React.FC = () => {
           onChange={(_, newValue) => setSelectedGraph(newValue)}
           options={graphs || []}
           getOptionLabel={(option) => option.name}
+          isOptionEqualToValue={(option, value) =>
+            option.graph_id === value.graph_id
+          }
+          renderOption={(props, option) => (
+            <li {...props} key={option.graph_id}>
+              {option.name}
+            </li>
+          )}
           sx={{
             width: 300,
             "& .MuiInputBase-root": {
@@ -101,26 +110,11 @@ export const GraphEditor: React.FC = () => {
         />
       </Box>
 
-      {/* Scrollable Content Area */}
-      <Box
-        sx={{
-          flexGrow: 1,
-          overflow: "auto",
-          p: 2,
-          bgcolor: "background.paper",
-        }}
-      >
-        {exportLoading ? (
-          <CircularProgress />
-        ) : error ? (
-          <Typography color="error">{error}</Typography>
-        ) : !selectedGraph ? (
-          <Typography>Select a graph to begin editing</Typography>
-        ) : graphData ? (
-          <Box sx={{ height: 600, border: 1, borderColor: "divider" }}>
-            <TreeView graphData={graphData} />
-          </Box>
-        ) : null}
+      {/* Graph View */}
+      <Box sx={{ flex: 1, overflow: "hidden" }}>
+        <ErrorBoundary>
+          {graphData && <TreeView graphData={graphData} />}
+        </ErrorBoundary>
       </Box>
     </Box>
   );

@@ -11,6 +11,8 @@ import CollapseAllIcon from "@mui/icons-material/UnfoldLess";
 import HomeIcon from "@mui/icons-material/Home"; // Add this import
 import { propertyBoxStyles } from "../styles/propertyStyles";
 import type { GraphExportData } from "../hooks/useGraphExport";
+import { PropertyBox } from "./shared/PropertyBox/PropertyBox";
+import NodeDetails from "./NodeDetails";
 
 interface TreeNode {
   id: string;
@@ -152,83 +154,6 @@ export const TreeView: React.FC<TreeViewProps> = ({ graphData }) => {
     );
   };
 
-  const renderDetails = () => {
-    if (!selectedNode) return null;
-    const isRoot = isRootNode(selectedNode.id);
-
-    // Format metadata JSON if present
-    const formatMetadata = (metadata: string | null) => {
-      if (!metadata) return "—";
-      try {
-        const parsed = JSON.parse(metadata);
-        return JSON.stringify(parsed, null, 4); // Changed from 2 to 4 spaces
-      } catch (e) {
-        return metadata;
-      }
-    };
-
-    return (
-      <Paper elevation={1} sx={propertyBoxStyles.container}>
-        <Typography variant="h6" sx={propertyBoxStyles.header}>
-          Node Details
-        </Typography>
-
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {/* Name */}
-          <Box sx={propertyBoxStyles.propertyRow}>
-            <Typography sx={propertyBoxStyles.propertyLabel}>Name</Typography>
-            <Typography sx={propertyBoxStyles.propertyValue}>
-              {isRoot ? "ROOT" : selectedNode.data.name}
-            </Typography>
-          </Box>
-
-          {/* Source ID */}
-          <Box sx={propertyBoxStyles.propertyRow}>
-            <Typography sx={propertyBoxStyles.propertyLabel}>
-              Source ID
-            </Typography>
-            <Typography sx={propertyBoxStyles.propertyValue}>
-              {selectedNode.data.source_id || "—"}
-            </Typography>
-          </Box>
-
-          {/* Notes */}
-          <Box sx={propertyBoxStyles.propertyRow}>
-            <Typography sx={propertyBoxStyles.propertyLabel}>Notes</Typography>
-            <Typography sx={propertyBoxStyles.propertyValue}>
-              {selectedNode.data.notes || "—"}
-            </Typography>
-          </Box>
-
-          {/* Metadata with JSON formatting */}
-          <Box sx={propertyBoxStyles.propertyRow}>
-            <Typography sx={propertyBoxStyles.propertyLabel}>
-              Metadata
-            </Typography>
-            <Typography
-              component="pre"
-              sx={{
-                ...propertyBoxStyles.propertyValue,
-                ...propertyBoxStyles.preformattedValue,
-                fontFamily: "monospace",
-                fontSize: "0.813rem",
-                backgroundColor: "rgba(0, 0, 0, 0.03)",
-                borderRadius: 1,
-                p: 1,
-                textAlign: "left", // Ensure left alignment
-                display: "block", // Ensure block display for proper alignment
-                width: "100%", // Take full width of container
-                margin: 0, // Remove any default margins
-              }}
-            >
-              {formatMetadata(selectedNode.data.metadata)}
-            </Typography>
-          </Box>
-        </Box>
-      </Paper>
-    );
-  };
-
   if (!treeData.length) return null;
 
   return (
@@ -301,12 +226,11 @@ export const TreeView: React.FC<TreeViewProps> = ({ graphData }) => {
           sx={{
             flex: 1,
             ml: 0, // Remove margin
-            p: 2, // Add padding around the details
             backgroundColor: "background.paper",
             overflow: "auto",
           }}
         >
-          {renderDetails()}
+          <NodeDetails selectedNode={selectedNode} isRootNode={isRootNode} />
         </Box>
       </Box>
     </Box>

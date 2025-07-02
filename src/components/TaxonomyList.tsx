@@ -22,7 +22,10 @@ const TaxonomyList: React.FC = () => {
   const [selectedGraph, setSelectedGraph] = useState<TaxonomyGraph | null>(
     null
   );
-  const navigate = useNavigate();
+
+  const handleGraphSelect = (graph: TaxonomyGraph) => {
+    setSelectedGraph(graph);
+  };
 
   return (
     <Box
@@ -131,7 +134,7 @@ const TaxonomyList: React.FC = () => {
                 <ListItem
                   key={graph.graph_id}
                   selected={selectedGraph?.graph_id === graph.graph_id}
-                  onClick={() => setSelectedGraph(graph)}
+                  onClick={() => handleGraphSelect(graph)}
                   sx={{
                     cursor: "pointer",
                     borderBottom: "1px solid",
@@ -153,11 +156,21 @@ const TaxonomyList: React.FC = () => {
       </Box>
 
       {/* Details Panel */}
-      <Box sx={{ flex: 1, maxWidth: 600 }}>
-        <Typography variant="h6" sx={{ mb: 1 }}>
-          Graph Details
-        </Typography>
-        <Paper elevation={1} sx={{ height: 500 }}>
+      <Box
+        sx={{
+          flex: 1,
+          maxWidth: 600,
+          backgroundColor: "background.paper",
+          overflow: "hidden",
+        }}
+      >
+        <Paper
+          elevation={1}
+          sx={{
+            height: 500,
+            overflow: "auto",
+          }}
+        >
           <TaxonomyDetails selectedGraph={selectedGraph} />
         </Paper>
       </Box>

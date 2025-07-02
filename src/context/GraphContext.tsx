@@ -1,52 +1,56 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+} from "react";
+import { taxonomyService } from "../services/taxonomyService";
 import type { TaxonomyGraph } from "../types/taxonomy";
-import { fetchTaxonomyGraphs } from "../services/taxonomyService";
 
-interface GraphContextType {
+export const GraphContext = createContext<{
   graphs: TaxonomyGraph[];
   isLoading: boolean;
-  error: string | undefined;
+  error: Error | null;
   refreshGraphs: () => Promise<void>;
-}
+}>({
+  graphs: [],
+  isLoading: false,
+  error: null,
+  refreshGraphs: async () => {},
+});
 
-const GraphContext = createContext<GraphContextType | undefined>(undefined);
-
-export function GraphProvider({ children }: { children: React.ReactNode }) {
+export const GraphProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [graphs, setGraphs] = useState<TaxonomyGraph[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | undefined>();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
-  const loadGraphs = async () => {
+  const refreshGraphs = useCallback(async () => {
     setIsLoading(true);
-    const result = await fetchTaxonomyGraphs();
-    if (result.error) {
-      setError(result.error);
-    } else {
-      const sortedGraphs = [...result.data].sort((a, b) =>
-        a.name.localeCompare(b.name)
+    setError(null);
+    try {
+      const data = await taxonomyService.fetchGraphList();
+      setGraphs(data);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err : new Error("Failed to fetch graphs")
       );
-      setGraphs(sortedGraphs);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
-  };
-
-  useEffect(() => {
-    loadGraphs();
   }, []);
 
+  useEffect(() => {
+    refreshGraphs();
+  }, [refreshGraphs]);
+
   return (
-    <GraphContext.Provider
-      value={{ graphs, isLoading, error, refreshGraphs: loadGraphs }}
-    >
+    <GraphContext.Provider value={{ graphs, isLoading, error, refreshGraphs }}>
       {children}
     </GraphContext.Provider>
   );
-}
+};
 
-export function useGraphs() {
-  const context = useContext(GraphContext);
-  if (context === undefined) {
-    throw new Error("useGraphs must be used within a GraphProvider");
-  }
-  return context;
-}
+export const useGraphs = () => useContext(GraphContext);
