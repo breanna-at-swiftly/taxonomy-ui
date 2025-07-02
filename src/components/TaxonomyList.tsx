@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { TaxonomyGraph } from "../types/taxonomy";
-import { fetchTaxonomyGraphs } from "../services/taxonomyService";
+import { useGraphs } from "../context/GraphContext";
 import TaxonomyDetails from "./TaxonomyDetails";
 import {
   Box,
@@ -10,73 +10,151 @@ import {
   ListItemText,
   Typography,
   CircularProgress,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import EditIcon from "@mui/icons-material/Edit";
+import { useNavigate } from "react-router-dom";
 
 const TaxonomyList: React.FC = () => {
-  const [graphs, setGraphs] = useState<TaxonomyGraph[]>([]);
-  const [error, setError] = useState<string | undefined>();
-  const [isLoading, setIsLoading] = useState(true);
+  const { graphs, isLoading, error, refreshGraphs } = useGraphs();
   const [selectedGraph, setSelectedGraph] = useState<TaxonomyGraph | null>(
     null
   );
-
-  useEffect(() => {
-    const loadGraphs = async () => {
-      const result = await fetchTaxonomyGraphs();
-      if (result.error) {
-        setError(result.error);
-      } else {
-        // Sort graphs alphabetically by name
-        const sortedGraphs = [...result.data].sort((a, b) =>
-          a.name.localeCompare(b.name)
-        );
-        setGraphs(sortedGraphs);
-      }
-      setIsLoading(false);
-    };
-
-    loadGraphs();
-  }, []);
-
-  if (isLoading) return <CircularProgress />;
-  if (error) return <Typography color="error">Error: {error}</Typography>;
+  const navigate = useNavigate();
 
   return (
-    <Box display="flex" gap={3}>
+    <Box
+      sx={{
+        display: "flex",
+        gap: 3,
+        width: "100%",
+        m: 0,
+        p: 0,
+      }}
+    >
       {/* List Box */}
-      <Box width={400}>
-        <Typography variant="h6" sx={{ mb: 1, px: 1 }}>
-          Taxonomy Graphs
-        </Typography>
-        <Paper elevation={1} sx={{ height: 500, overflow: "hidden" }}>
-          <List sx={{ height: "100%", overflow: "auto" }}>
-            {graphs.map((graph) => (
-              <ListItem
-                key={graph.graph_id}
-                selected={selectedGraph?.graph_id === graph.graph_id}
-                onClick={() => setSelectedGraph(graph)}
-                sx={{
-                  cursor: "pointer",
-                  borderBottom: "1px solid",
-                  borderColor: "divider",
-                }}
-              >
-                <ListItemText
-                  primary={graph.name}
-                  primaryTypographyProps={{
-                    noWrap: true,
-                    fontSize: 14,
+      <Box
+        sx={{
+          width: 400,
+          flexShrink: 0,
+        }}
+      >
+        <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{ mb: 1 }}
+        >
+          <Typography variant="h6">Taxonomy Graphs</Typography>
+          <Box display="flex" gap={1}>
+            <Tooltip title="Edit Selected Graph">
+              <span>
+                <IconButton
+                  size="small"
+                  onClick={() =>
+                    selectedGraph &&
+                    navigate(`/editor?graphId=${selectedGraph.graph_id}`)
+                  }
+                  disabled={!selectedGraph}
+                  sx={{
+                    color: "rgba(0, 0, 0, 0.54)",
+                    transition: "all 0.2s ease-in-out",
+                    "&:hover": {
+                      color: "BANNER_COLOR",
+                      backgroundColor: "rgba(139, 75, 98, 0.04)",
+                    },
+                    "&.Mui-disabled": {
+                      color: "rgba(0, 0, 0, 0.26)",
+                    },
                   }}
-                />
-              </ListItem>
-            ))}
-          </List>
+                >
+                  <EditIcon fontSize="small" sx={{ width: 20, height: 20 }} />
+                </IconButton>
+              </span>
+            </Tooltip>
+            <Tooltip title="Refresh graphs list">
+              <span>
+                <IconButton
+                  size="small"
+                  onClick={refreshGraphs}
+                  disabled={isLoading}
+                  sx={{
+                    color: "rgba(0, 0, 0, 0.54)",
+                    transition: "all 0.2s ease-in-out",
+                    "&:hover": {
+                      color: "BANNER_COLOR",
+                      backgroundColor: "rgba(139, 75, 98, 0.04)",
+                    },
+                    "&.Mui-disabled": {
+                      color: "rgba(0, 0, 0, 0.26)",
+                    },
+                    animation: isLoading ? "spin 1s linear infinite" : "none",
+                    "@keyframes spin": {
+                      "0%": { transform: "rotate(0deg)" },
+                      "100%": { transform: "rotate(360deg)" },
+                    },
+                  }}
+                >
+                  <RefreshIcon
+                    fontSize="small"
+                    sx={{
+                      width: 20,
+                      height: 20,
+                    }}
+                  />
+                </IconButton>
+              </span>
+            </Tooltip>
+          </Box>
+        </Box>
+        <Paper
+          elevation={1}
+          sx={{
+            height: 500,
+            overflow: "hidden",
+          }}
+        >
+          {isLoading ? (
+            <Box
+              display="flex"
+              justifyContent="center"
+              alignItems="center"
+              height="100%"
+            >
+              <CircularProgress size={24} />
+            </Box>
+          ) : (
+            <List sx={{ height: "100%", overflow: "auto" }}>
+              {graphs.map((graph) => (
+                <ListItem
+                  key={graph.graph_id}
+                  selected={selectedGraph?.graph_id === graph.graph_id}
+                  onClick={() => setSelectedGraph(graph)}
+                  sx={{
+                    cursor: "pointer",
+                    borderBottom: "1px solid",
+                    borderColor: "divider",
+                  }}
+                >
+                  <ListItemText
+                    primary={graph.name}
+                    primaryTypographyProps={{
+                      noWrap: true,
+                      fontSize: 14,
+                    }}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          )}
         </Paper>
       </Box>
 
       {/* Details Panel */}
-      <Box width={600}>
-        <Typography variant="h6" sx={{ mb: 1, px: 1 }}>
+      <Box sx={{ flex: 1, maxWidth: 600 }}>
+        <Typography variant="h6" sx={{ mb: 1 }}>
           Graph Details
         </Typography>
         <Paper elevation={1} sx={{ height: 500 }}>
