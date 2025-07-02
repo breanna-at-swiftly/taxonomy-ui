@@ -32,7 +32,6 @@ export const TreeView: React.FC<TreeViewProps> = ({ graphData }) => {
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
 
   const treeData = useMemo(() => {
-    // Transform graph data into tree structure
     const nodeMap = new Map(
       graphData.nodes.map((node) => [
         node.node_id,
@@ -40,16 +39,13 @@ export const TreeView: React.FC<TreeViewProps> = ({ graphData }) => {
           id: node.node_id,
           name: node.name,
           children: [],
-          // Move these properties to top level instead of nested under data
-          node_type_id: node.node_type_id,
-          source_id: node.source_id,
-          notes: node.notes,
-          metadata: node.metadata,
+          // Don't nest the data again since it's already a complete node
+          ...node, // Spread the node properties directly
         },
       ])
     );
 
-    // Build parent-child relationships
+    // Build parent-child relationships from links
     graphData.links.forEach((link) => {
       const parent = nodeMap.get(link.from_node_id);
       const child = nodeMap.get(link.to_node_id);
@@ -59,9 +55,8 @@ export const TreeView: React.FC<TreeViewProps> = ({ graphData }) => {
       }
     });
 
-    // Return array with root node as first element
     const rootNode = nodeMap.get(graphData.graph.root_node_id);
-    return rootNode ? [rootNode] : []; // Convert to array for Arborist
+    return rootNode ? [rootNode] : [];
   }, [graphData]);
 
   const handleExpandAll = () => {
@@ -159,6 +154,9 @@ export const TreeView: React.FC<TreeViewProps> = ({ graphData }) => {
   const renderDetails = () => {
     if (!selectedNode) return null;
     const isRoot = isRootNode(selectedNode.id);
+
+    // Log the selected node to verify data structure
+    console.log("Selected Node:", selectedNode);
 
     // Common styles for property labels
     const labelStyles = {
