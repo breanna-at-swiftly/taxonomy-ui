@@ -1,24 +1,28 @@
 import "./App.css";
 import { ThemeProvider } from "@mui/material/styles";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { theme } from "./theme/theme";
+import { GraphProvider } from "./context/GraphContext";
+import Layout from "./components/Layout";
 import TaxonomyList from "./components/TaxonomyList";
-import { VERSION } from "./config/version";
+import GraphEditor from "./components/GraphEditor";
+import { Box } from "@mui/material";
 
 function App() {
   return (
     <ThemeProvider theme={theme}>
-      <div className="min-h-screen bg-gray-100">
-        <header className="bg-white shadow">
-          <div className="max-w-7xl mx-auto py-3 px-4">
-            <h1 className="text-xl font-bold text-gray-900">
-              Swiftly Taxonomy Manager v{VERSION.number} {VERSION.label}
-            </h1>
-          </div>
-        </header>
-        <main className="max-w-7xl mx-auto py-4 sm:px-6 lg:px-8">
-          <TaxonomyList />
-        </main>
-      </div>
+      <Box sx={{ margin: 0, padding: 0 }}>
+        <BrowserRouter>
+          <GraphProvider>
+            <Routes>
+              <Route path="/" element={<Layout />}>
+                <Route index element={<TaxonomyList />} />
+                <Route path="editor" element={<GraphEditor />} />
+              </Route>
+            </Routes>
+          </GraphProvider>
+        </BrowserRouter>
+      </Box>
     </ThemeProvider>
   );
 }
