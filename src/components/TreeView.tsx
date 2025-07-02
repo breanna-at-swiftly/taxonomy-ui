@@ -9,6 +9,7 @@ import ArticleIcon from "@mui/icons-material/Article";
 import ExpandAllIcon from "@mui/icons-material/UnfoldMore";
 import CollapseAllIcon from "@mui/icons-material/UnfoldLess";
 import HomeIcon from "@mui/icons-material/Home"; // Add this import
+import { propertyBoxStyles } from "../styles/propertyStyles";
 import type { GraphExportData } from "../hooks/useGraphExport";
 
 interface TreeNode {
@@ -155,79 +156,72 @@ export const TreeView: React.FC<TreeViewProps> = ({ graphData }) => {
     if (!selectedNode) return null;
     const isRoot = isRootNode(selectedNode.id);
 
-    // Log the selected node to verify data structure
-    console.log("Selected Node:", selectedNode);
-
-    // Common styles for property labels
-    const labelStyles = {
-      fontSize: "0.75rem",
-      textTransform: "uppercase",
-      letterSpacing: "0.05em",
-      color: "text.secondary",
-      width: "120px", // Slightly wider for better readability
-      textAlign: "left",
-      paddingRight: 2, // Add some space between label and value
-    };
-
-    // Common styles for property values
-    const valueStyles = {
-      fontSize: "0.875rem",
-      textAlign: "left",
-      paddingLeft: 2, // Add some space between label and value
-      flex: 1,
+    // Format metadata JSON if present
+    const formatMetadata = (metadata: string | null) => {
+      if (!metadata) return "—";
+      try {
+        const parsed = JSON.parse(metadata);
+        return JSON.stringify(parsed, null, 4); // Changed from 2 to 4 spaces
+      } catch (e) {
+        return metadata;
+      }
     };
 
     return (
-      <Paper elevation={1} sx={{ p: 2, height: "100%", overflow: "auto" }}>
-        <Typography
-          variant="h6"
-          gutterBottom
-          sx={{ ml: 0, fontSize: "1.1rem" }}
-        >
+      <Paper elevation={1} sx={propertyBoxStyles.container}>
+        <Typography variant="h6" sx={propertyBoxStyles.header}>
           Node Details
         </Typography>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 2,
-          }}
-        >
-          {/* Property Rows */}
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            <Typography sx={labelStyles}>Name</Typography>
-            <Typography sx={valueStyles}>
+
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {/* Name */}
+          <Box sx={propertyBoxStyles.propertyRow}>
+            <Typography sx={propertyBoxStyles.propertyLabel}>Name</Typography>
+            <Typography sx={propertyBoxStyles.propertyValue}>
               {isRoot ? "ROOT" : selectedNode.data.name}
             </Typography>
           </Box>
 
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            <Typography sx={labelStyles}>Source ID</Typography>
-            <Typography sx={valueStyles}>
+          {/* Source ID */}
+          <Box sx={propertyBoxStyles.propertyRow}>
+            <Typography sx={propertyBoxStyles.propertyLabel}>
+              Source ID
+            </Typography>
+            <Typography sx={propertyBoxStyles.propertyValue}>
               {selectedNode.data.source_id || "—"}
             </Typography>
           </Box>
 
-          <Box sx={{ display: "flex", alignItems: "flex-start" }}>
-            <Typography sx={labelStyles}>Notes</Typography>
-            <Typography sx={{ ...valueStyles, whiteSpace: "pre-wrap" }}>
+          {/* Notes */}
+          <Box sx={propertyBoxStyles.propertyRow}>
+            <Typography sx={propertyBoxStyles.propertyLabel}>Notes</Typography>
+            <Typography sx={propertyBoxStyles.propertyValue}>
               {selectedNode.data.notes || "—"}
             </Typography>
           </Box>
 
-          <Box sx={{ display: "flex", alignItems: "flex-start" }}>
-            <Typography sx={labelStyles}>Metadata</Typography>
+          {/* Metadata with JSON formatting */}
+          <Box sx={propertyBoxStyles.propertyRow}>
+            <Typography sx={propertyBoxStyles.propertyLabel}>
+              Metadata
+            </Typography>
             <Typography
               component="pre"
               sx={{
-                ...valueStyles,
-                whiteSpace: "pre-wrap",
+                ...propertyBoxStyles.propertyValue,
+                ...propertyBoxStyles.preformattedValue,
                 fontFamily: "monospace",
-                m: 0,
-                p: 0,
+                fontSize: "0.813rem",
+                backgroundColor: "rgba(0, 0, 0, 0.03)",
+                borderRadius: 1,
+                p: 1,
+                textAlign: "left", // Ensure left alignment
+                display: "block", // Ensure block display for proper alignment
+                width: "100%", // Take full width of container
+                margin: 0, // Remove any default margins
               }}
             >
-              {selectedNode.data.metadata || "—"}
+              {formatMetadata(selectedNode.data.metadata)}
             </Typography>
           </Box>
         </Box>
