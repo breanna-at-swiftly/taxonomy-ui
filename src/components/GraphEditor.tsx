@@ -17,12 +17,12 @@ import { ErrorBoundary } from "./shared/ErrorBoundary/ErrorBoundary";
 export const GraphEditor: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { graphs, isLoading: graphsLoading } = useGraphs();
-  const { fetchGraphData, isLoading: exportLoading, error } = useGraphExport();
+  const { fetchGraphData, isLoading: exportLoading } = useGraphExport();
 
   const [selectedGraph, setSelectedGraph] = useState<TaxonomyGraph | null>(
     null
   );
-  const [graphData, setGraphData] = useState<any>(null);
+  const [graphData, setGraphData] = useState<GraphExportData | null>(null);
 
   useEffect(() => {
     // Handle graph ID from URL
@@ -35,7 +35,10 @@ export const GraphEditor: React.FC = () => {
     }
   }, [searchParams, graphs]);
 
+  // Add loading state monitoring
   useEffect(() => {
+    console.log("Graph selection changed:", selectedGraph?.name);
+
     const loadGraphData = async () => {
       if (!selectedGraph) {
         setGraphData(null);
@@ -44,10 +47,10 @@ export const GraphEditor: React.FC = () => {
 
       try {
         const data = await fetchGraphData(selectedGraph.graph_id);
+        console.log("Fetched new graph data:", data);
         setGraphData(data);
       } catch (err) {
         console.error("Failed to load graph data:", err);
-        // Consider adding error state handling
       }
     };
 
@@ -74,7 +77,10 @@ export const GraphEditor: React.FC = () => {
       >
         <Autocomplete
           value={selectedGraph}
-          onChange={(_, newValue) => setSelectedGraph(newValue)}
+          onChange={(_, newValue) => {
+            console.log("Selected new graph:", newValue?.name);
+            setSelectedGraph(newValue);
+          }}
           options={graphs || []}
           getOptionLabel={(option) => option.name}
           isOptionEqualToValue={(option, value) =>

@@ -28,6 +28,7 @@ const PropertyRow: React.FC<PropertyItem> = ({
           textTransform: "uppercase",
           letterSpacing: "0.05em",
           color: "text.secondary",
+          textAlign: "left", // Ensure left alignment
           pt: 0.5,
         }}
       >
@@ -41,6 +42,10 @@ const PropertyRow: React.FC<PropertyItem> = ({
           fontSize: "0.875rem",
           pl: 2,
           m: 0,
+          textAlign: "left", // Ensure left alignment
+          whiteSpace: "normal", // Allow text to wrap naturally
+          wordBreak: "break-word", // Handle long strings
+          fontFamily: type === "json" ? "monospace" : "inherit",
         }}
       >
         {value || "—"}

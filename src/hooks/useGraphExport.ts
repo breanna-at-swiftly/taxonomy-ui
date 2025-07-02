@@ -1,43 +1,30 @@
 import { useState, useCallback } from "react";
 
 export interface GraphExportData {
-  graph: {
-    graph_id: number;
-    topology_id: number;
-    name: string;
-    notes: string;
-    root_node_id: string;
-    inserted_datetime: string;
-    updated_datetime: string;
-    updated_by: string;
-  };
   nodes: Array<{
     node_id: string;
-    node_type_id: number;
-    graph_id: number;
-    source_id: string;
     name: string;
+    node_type_id: number;
+    source_id: string;
     notes: string;
     metadata: string;
-    inserted_datetime: string;
-    updated_datetime: string;
-    updated_by: string;
   }>;
   links: Array<{
-    link_id: string;
-    link_type_id: number;
-    from_graph_id: number;
-    from_node_id: string;
-    from_source_id: string;
-    to_graph_id: number;
-    to_node_id: string;
-    to_source_id: string;
-    link_order: number;
-    metadata: string;
-    valid_from_datetime: string;
-    valid_until_datetime: string;
-    is_disabled: boolean;
+    parent_node_id: string;
+    child_node_id: string;
   }>;
+  graph: {
+    graph_id: number;
+    root_node_id: string;
+  };
+  rootNode: {
+    node_id: string;
+    name: string;
+    node_type_id: number;
+    source_id: string;
+    notes: string;
+    metadata: string;
+  };
 }
 
 const graphCache = new Map<number, GraphExportData>();
@@ -45,6 +32,8 @@ const graphCache = new Map<number, GraphExportData>();
 export const useGraphExport = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentGraphData, setCurrentGraphData] =
+    useState<GraphExportData | null>(null);
 
   const fetchGraphData = useCallback(async (graphId: number) => {
     setIsLoading(true);
@@ -53,8 +42,10 @@ export const useGraphExport = () => {
     try {
       // Check cache first
       if (graphCache.has(graphId)) {
-        setIsLoading(false);
-        return graphCache.get(graphId)!;
+        const cachedData = graphCache.get(graphId)!;
+        console.log("Using cached graph data:", graphId);
+        setCurrentGraphData(cachedData);
+        return cachedData;
       }
 
       const response = await fetch(
@@ -62,14 +53,35 @@ export const useGraphExport = () => {
       );
       if (!response.ok) throw new Error("Failed to fetch graph data");
 
-      const data: GraphExportData = await response.json();
+      const rawData = await response.json();
+      console.log("Received raw graph data:", graphId);
 
-      // Cache the result
-      graphCache.set(graphId, data);
+      // Find root node first
+      const rootNode = rawData.nodes?.find(
+        (node) => node.node_id === rawData.graph.root_node_id
+      );
 
-      return data;
+      if (!rootNode) {
+        throw new Error("Root node not found in nodes list");
+      }
+
+      // Transform raw data once
+      const processedData: GraphExportData = {
+        nodes: Array.isArray(rawData.nodes) ? rawData.nodes : [],
+        links: Array.isArray(rawData.links) ? rawData.links : [],
+        graph: rawData.graph,
+        rootNode,
+      };
+
+      // Cache and set current data
+      graphCache.set(graphId, processedData);
+      setCurrentGraphData(processedData);
+
+      return processedData;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      console.error("Graph export error:", errorMessage);
+      setError(errorMessage);
       throw err;
     } finally {
       setIsLoading(false);
@@ -78,6 +90,7 @@ export const useGraphExport = () => {
 
   return {
     fetchGraphData,
+    currentGraphData,
     isLoading,
     error,
     clearCache: () => graphCache.clear(),

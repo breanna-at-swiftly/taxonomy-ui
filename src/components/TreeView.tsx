@@ -1,6 +1,13 @@
+import React, { useEffect, useRef, useState, startTransition } from "react";
 import { Tree } from "react-arborist";
-import { useMemo, useRef, useState } from "react";
-import { Box, IconButton, Paper, Tooltip, Typography } from "@mui/material";
+import {
+  Box,
+  CircularProgress,
+  IconButton,
+  Paper,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import FolderIcon from "@mui/icons-material/Folder";
@@ -32,34 +39,79 @@ interface TreeViewProps {
 
 export const TreeView: React.FC<TreeViewProps> = ({ graphData }) => {
   const treeRef = useRef(null);
+  const renderCount = useRef(0); // Move useRef to component level
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [treeData, setTreeData] = useState<TreeNode[]>([]);
+  const [treeKey, setTreeKey] = useState(0);
 
-  const treeData = useMemo(() => {
-    const nodeMap = new Map(
-      graphData.nodes.map((node) => [
-        node.node_id,
-        {
-          id: node.node_id,
-          name: node.name,
-          children: [],
-          // Don't nest the data again since it's already a complete node
-          ...node, // Spread the node properties directly
-        },
-      ])
-    );
+  useEffect(() => {
+    // Increment render count here
+    renderCount.current++;
 
-    // Build parent-child relationships from links
-    graphData.links.forEach((link) => {
-      const parent = nodeMap.get(link.from_node_id);
-      const child = nodeMap.get(link.to_node_id);
-      if (parent && child) {
-        if (!parent.children) parent.children = [];
-        parent.children.push(child);
-      }
+    console.log(`Tree build attempt ${renderCount.current}:`, {
+      hasData: !!graphData,
+      rootNodeId: graphData?.rootNode?.node_id,
+      graphId: graphData?.graph?.graph_id,
+      timestamp: new Date().toISOString(),
     });
 
-    const rootNode = nodeMap.get(graphData.graph.root_node_id);
-    return rootNode ? [rootNode] : [];
+    if (!graphData?.nodes || !graphData?.links || !graphData?.rootNode) {
+      console.warn("Missing required graph data");
+      setTreeData([]);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      // Clear selected node when graph changes
+      setSelectedNode(null);
+
+      // Build tree structure (existing nodeMap creation code)
+      const nodeMap = new Map(
+        graphData.nodes.map((node) => [
+          node.node_id,
+          {
+            id: node.node_id,
+            name: node.name,
+            children: [],
+            data: node,
+          },
+        ])
+      );
+
+      // Process links (existing links processing)
+      graphData.links.forEach(({ from_node_id, to_node_id }) => {
+        const parent = nodeMap.get(from_node_id);
+        const child = nodeMap.get(to_node_id);
+        if (parent && child) {
+          parent.children = parent.children || [];
+          parent.children.push(child);
+        }
+      });
+
+      // Set tree with root node
+      const rootTreeNode = nodeMap.get(graphData.rootNode.node_id);
+      if (rootTreeNode) {
+        console.log(`Setting tree data (attempt ${renderCount.current}):`, {
+          name: rootTreeNode.name,
+          id: rootTreeNode.id,
+          childCount: rootTreeNode.children?.length || 0,
+          timestamp: new Date().toISOString(),
+        });
+
+        // Update state updates to use imported startTransition
+        startTransition(() => {
+          setTreeData([rootTreeNode]);
+          setTreeKey((prev) => prev + 1);
+        });
+      }
+    } catch (error) {
+      console.error("Error building tree:", error);
+      setTreeData([]);
+    } finally {
+      setIsLoading(false);
+    }
   }, [graphData]);
 
   const handleExpandAll = () => {
@@ -154,7 +206,21 @@ export const TreeView: React.FC<TreeViewProps> = ({ graphData }) => {
     );
   };
 
-  if (!treeData.length) return null;
+  // Change rendering condition
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100%",
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -206,19 +272,53 @@ export const TreeView: React.FC<TreeViewProps> = ({ graphData }) => {
             borderRight: 1,
             borderColor: "divider",
             overflow: "auto",
+            position: "relative", // Add for spinner positioning
           }}
         >
-          <Tree
-            ref={treeRef}
-            initialData={treeData}
-            width={400}
-            height={560}
-            indent={4}
-            rowHeight={32}
-            overscanCount={4}
-          >
-            {renderNode}
-          </Tree>
+          {isLoading ? (
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "100%",
+                gap: 2,
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: "rgba(255, 255, 255, 0.8)", // Semi-transparent overlay
+              }}
+            >
+              <CircularProgress
+                size={40}
+                sx={{
+                  color: "primary.main",
+                }}
+              />
+              <Typography variant="body2" color="text.secondary">
+                Loading tree data...
+              </Typography>
+            </Box>
+          ) : treeData.length > 0 ? (
+            <Tree
+              key={treeKey}
+              ref={treeRef}
+              initialData={treeData}
+              width={400}
+              height={560}
+              indent={2} // Compact tree hierarchy
+              rowHeight={32}
+            >
+              {renderNode}
+            </Tree>
+          ) : (
+            <Box sx={{ p: 2 }}>
+              <Typography>No tree data available</Typography>
+            </Box>
+          )}
         </Box>
 
         {/* Details Panel */}

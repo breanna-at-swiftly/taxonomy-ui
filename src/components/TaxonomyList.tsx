@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { TaxonomyGraph } from "../types/taxonomy";
 import { useGraphs } from "../context/GraphContext";
 import TaxonomyDetails from "./TaxonomyDetails";
@@ -15,9 +16,9 @@ import {
 } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import EditIcon from "@mui/icons-material/Edit";
-import { useNavigate } from "react-router-dom";
 
 const TaxonomyList: React.FC = () => {
+  const navigate = useNavigate(); // Initialize navigate function
   const { graphs, isLoading, error, refreshGraphs } = useGraphs();
   const [selectedGraph, setSelectedGraph] = useState<TaxonomyGraph | null>(
     null
