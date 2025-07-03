@@ -197,13 +197,14 @@ export const TreeView: React.FC<TreeViewProps> = ({ graphData }) => {
         <Box
           sx={{
             ml: 1,
-            fontWeight: isRoot ? 600 : node.isLeaf ? "normal" : "bold",
+            // Update font weights to be lighter
+            fontWeight: isRoot ? 500 : node.isLeaf ? 400 : 450,
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
           }}
         >
-          {isRoot ? "ROOT" : node.data.name} {/* Use data.name for display */}
+          {isRoot ? "ROOT" : node.data.name}
         </Box>
       </Box>
     );
