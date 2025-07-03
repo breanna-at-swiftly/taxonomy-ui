@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { TaxonomyGraph } from "../types/taxonomy";
 import { useGraphs } from "../context/GraphContext";
 import TaxonomyDetails from "./TaxonomyDetails";
@@ -15,14 +16,17 @@ import {
 } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import EditIcon from "@mui/icons-material/Edit";
-import { useNavigate } from "react-router-dom";
 
 const TaxonomyList: React.FC = () => {
+  const navigate = useNavigate(); // Initialize navigate function
   const { graphs, isLoading, error, refreshGraphs } = useGraphs();
   const [selectedGraph, setSelectedGraph] = useState<TaxonomyGraph | null>(
     null
   );
-  const navigate = useNavigate();
+
+  const handleGraphSelect = (graph: TaxonomyGraph) => {
+    setSelectedGraph(graph);
+  };
 
   return (
     <Box
@@ -131,7 +135,7 @@ const TaxonomyList: React.FC = () => {
                 <ListItem
                   key={graph.graph_id}
                   selected={selectedGraph?.graph_id === graph.graph_id}
-                  onClick={() => setSelectedGraph(graph)}
+                  onClick={() => handleGraphSelect(graph)}
                   sx={{
                     cursor: "pointer",
                     borderBottom: "1px solid",
@@ -153,11 +157,21 @@ const TaxonomyList: React.FC = () => {
       </Box>
 
       {/* Details Panel */}
-      <Box sx={{ flex: 1, maxWidth: 600 }}>
-        <Typography variant="h6" sx={{ mb: 1 }}>
-          Graph Details
-        </Typography>
-        <Paper elevation={1} sx={{ height: 500 }}>
+      <Box
+        sx={{
+          flex: 1,
+          maxWidth: 600,
+          backgroundColor: "background.paper",
+          overflow: "hidden",
+        }}
+      >
+        <Paper
+          elevation={1}
+          sx={{
+            height: 500,
+            overflow: "auto",
+          }}
+        >
           <TaxonomyDetails selectedGraph={selectedGraph} />
         </Paper>
       </Box>

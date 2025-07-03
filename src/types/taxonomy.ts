@@ -8,8 +8,3 @@ export interface TaxonomyGraph {
   updated_datetime: string;
   updated_by: string;
 }
-
-export interface ApiResponse<T> {
-  data: T;
-  error?: string;
-}

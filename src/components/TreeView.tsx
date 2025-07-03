@@ -1,6 +1,13 @@
+import React, { useEffect, useRef, useState, startTransition } from "react";
 import { Tree } from "react-arborist";
-import { useMemo, useRef, useState } from "react";
-import { Box, IconButton, Paper, Tooltip, Typography } from "@mui/material";
+import {
+  Box,
+  CircularProgress,
+  IconButton,
+  Paper,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import FolderIcon from "@mui/icons-material/Folder";
@@ -11,18 +18,9 @@ import CollapseAllIcon from "@mui/icons-material/UnfoldLess";
 import HomeIcon from "@mui/icons-material/Home"; // Add this import
 import { propertyBoxStyles } from "../styles/propertyStyles";
 import type { GraphExportData } from "../hooks/useGraphExport";
-
-interface TreeNode {
-  id: string;
-  name: string;
-  children?: TreeNode[];
-  data: {
-    node_type_id: number;
-    source_id: string;
-    notes: string;
-    metadata: string;
-  };
-}
+import { PropertyBox } from "./shared/PropertyBox/PropertyBox";
+import NodeDetails from "./NodeDetails";
+import type { TreeNode } from "./NodeDetails";
 
 interface TreeViewProps {
   graphData: GraphExportData;
@@ -30,34 +28,92 @@ interface TreeViewProps {
 
 export const TreeView: React.FC<TreeViewProps> = ({ graphData }) => {
   const treeRef = useRef(null);
+  const renderCount = useRef(0); // Move useRef to component level
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [treeData, setTreeData] = useState<TreeNode[]>([]);
+  const [treeKey, setTreeKey] = useState(0);
 
-  const treeData = useMemo(() => {
-    const nodeMap = new Map(
-      graphData.nodes.map((node) => [
-        node.node_id,
-        {
-          id: node.node_id,
-          name: node.name,
-          children: [],
-          // Don't nest the data again since it's already a complete node
-          ...node, // Spread the node properties directly
-        },
-      ])
-    );
+  useEffect(() => {
+    // Increment render count here
+    renderCount.current++;
 
-    // Build parent-child relationships from links
-    graphData.links.forEach((link) => {
-      const parent = nodeMap.get(link.from_node_id);
-      const child = nodeMap.get(link.to_node_id);
-      if (parent && child) {
-        if (!parent.children) parent.children = [];
-        parent.children.push(child);
-      }
+    console.log(`Tree build attempt ${renderCount.current}:`, {
+      hasData: !!graphData,
+      rootNodeId: graphData?.rootNode?.node_id,
+      graphId: graphData?.graph?.graph_id,
+      timestamp: new Date().toISOString(),
     });
 
-    const rootNode = nodeMap.get(graphData.graph.root_node_id);
-    return rootNode ? [rootNode] : [];
+    if (!graphData?.nodes || !graphData?.links || !graphData?.rootNode) {
+      console.warn("Missing required graph data");
+      setTreeData([]);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      // Clear selected node when graph changes
+      setSelectedNode(null);
+
+      // Build tree structure (existing nodeMap creation code)
+      const nodeMap = new Map(
+        graphData.nodes.map((node) => [
+          node.node_id,
+          {
+            id: node.node_id,
+            children: [],
+            parents: [],
+            data: {
+              name: node.name, // Move name into data
+              node_type_id: node.node_type_id,
+              source_id: node.source_id,
+              notes: node.notes,
+              metadata: node.metadata,
+              inserted_datetime: node.inserted_datetime,
+              updated_datetime: node.updated_datetime,
+              updated_by: node.updated_by,
+            },
+            // These properties are required by react-arborist Tree
+            name: node.name, // Duplicate for Tree display
+            isLeaf: false, // Will be set correctly when processing links
+            isOpen: false, // Tree component manages this
+          },
+        ])
+      );
+
+      // Process links (existing links processing)
+      graphData.links.forEach(({ from_node_id, to_node_id }) => {
+        const parent = nodeMap.get(from_node_id);
+        const child = nodeMap.get(to_node_id);
+        if (parent && child) {
+          parent.children = parent.children || [];
+          parent.children.push(child);
+        }
+      });
+
+      // Set tree with root node
+      const rootTreeNode = nodeMap.get(graphData.rootNode.node_id);
+      if (rootTreeNode) {
+        console.log(`Setting tree data (attempt ${renderCount.current}):`, {
+          name: rootTreeNode.name,
+          id: rootTreeNode.id,
+          childCount: rootTreeNode.children?.length || 0,
+          timestamp: new Date().toISOString(),
+        });
+
+        // Update state updates to use imported startTransition
+        startTransition(() => {
+          setTreeData([rootTreeNode]);
+          setTreeKey((prev) => prev + 1);
+        });
+      }
+    } catch (error) {
+      console.error("Error building tree:", error);
+      setTreeData([]);
+    } finally {
+      setIsLoading(false);
+    }
   }, [graphData]);
 
   const handleExpandAll = () => {
@@ -72,8 +128,9 @@ export const TreeView: React.FC<TreeViewProps> = ({ graphData }) => {
   const isRootNode = (nodeId: string) =>
     nodeId === graphData.graph.root_node_id;
 
+  // Update renderNode to use data.name for display logic but name for rendering
   const renderNode = ({ node, style, dragHandle }) => {
-    const hasChildren = node.data.children?.length > 0;
+    const hasChildren = node.children?.length > 0;
     const isRoot = isRootNode(node.id);
     const isSelected = selectedNode?.id === node.id;
 
@@ -146,90 +203,27 @@ export const TreeView: React.FC<TreeViewProps> = ({ graphData }) => {
             textOverflow: "ellipsis",
           }}
         >
-          {isRoot ? "ROOT" : node.data.name}
+          {isRoot ? "ROOT" : node.data.name} {/* Use data.name for display */}
         </Box>
       </Box>
     );
   };
 
-  const renderDetails = () => {
-    if (!selectedNode) return null;
-    const isRoot = isRootNode(selectedNode.id);
-
-    // Format metadata JSON if present
-    const formatMetadata = (metadata: string | null) => {
-      if (!metadata) return "—";
-      try {
-        const parsed = JSON.parse(metadata);
-        return JSON.stringify(parsed, null, 4); // Changed from 2 to 4 spaces
-      } catch (e) {
-        return metadata;
-      }
-    };
-
+  // Change rendering condition
+  if (isLoading) {
     return (
-      <Paper elevation={1} sx={propertyBoxStyles.container}>
-        <Typography variant="h6" sx={propertyBoxStyles.header}>
-          Node Details
-        </Typography>
-
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {/* Name */}
-          <Box sx={propertyBoxStyles.propertyRow}>
-            <Typography sx={propertyBoxStyles.propertyLabel}>Name</Typography>
-            <Typography sx={propertyBoxStyles.propertyValue}>
-              {isRoot ? "ROOT" : selectedNode.data.name}
-            </Typography>
-          </Box>
-
-          {/* Source ID */}
-          <Box sx={propertyBoxStyles.propertyRow}>
-            <Typography sx={propertyBoxStyles.propertyLabel}>
-              Source ID
-            </Typography>
-            <Typography sx={propertyBoxStyles.propertyValue}>
-              {selectedNode.data.source_id || "—"}
-            </Typography>
-          </Box>
-
-          {/* Notes */}
-          <Box sx={propertyBoxStyles.propertyRow}>
-            <Typography sx={propertyBoxStyles.propertyLabel}>Notes</Typography>
-            <Typography sx={propertyBoxStyles.propertyValue}>
-              {selectedNode.data.notes || "—"}
-            </Typography>
-          </Box>
-
-          {/* Metadata with JSON formatting */}
-          <Box sx={propertyBoxStyles.propertyRow}>
-            <Typography sx={propertyBoxStyles.propertyLabel}>
-              Metadata
-            </Typography>
-            <Typography
-              component="pre"
-              sx={{
-                ...propertyBoxStyles.propertyValue,
-                ...propertyBoxStyles.preformattedValue,
-                fontFamily: "monospace",
-                fontSize: "0.813rem",
-                backgroundColor: "rgba(0, 0, 0, 0.03)",
-                borderRadius: 1,
-                p: 1,
-                textAlign: "left", // Ensure left alignment
-                display: "block", // Ensure block display for proper alignment
-                width: "100%", // Take full width of container
-                margin: 0, // Remove any default margins
-              }}
-            >
-              {formatMetadata(selectedNode.data.metadata)}
-            </Typography>
-          </Box>
-        </Box>
-      </Paper>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100%",
+        }}
+      >
+        <CircularProgress />
+      </Box>
     );
-  };
-
-  if (!treeData.length) return null;
+  }
 
   return (
     <Box
@@ -281,19 +275,53 @@ export const TreeView: React.FC<TreeViewProps> = ({ graphData }) => {
             borderRight: 1,
             borderColor: "divider",
             overflow: "auto",
+            position: "relative", // Add for spinner positioning
           }}
         >
-          <Tree
-            ref={treeRef}
-            initialData={treeData}
-            width={400}
-            height={560}
-            indent={4}
-            rowHeight={32}
-            overscanCount={4}
-          >
-            {renderNode}
-          </Tree>
+          {isLoading ? (
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "100%",
+                gap: 2,
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: "rgba(255, 255, 255, 0.8)", // Semi-transparent overlay
+              }}
+            >
+              <CircularProgress
+                size={40}
+                sx={{
+                  color: "primary.main",
+                }}
+              />
+              <Typography variant="body2" color="text.secondary">
+                Loading tree data...
+              </Typography>
+            </Box>
+          ) : treeData.length > 0 ? (
+            <Tree
+              key={treeKey}
+              ref={treeRef}
+              initialData={treeData}
+              width={400}
+              height={560}
+              indent={2} // Compact tree hierarchy
+              rowHeight={32}
+            >
+              {renderNode}
+            </Tree>
+          ) : (
+            <Box sx={{ p: 2 }}>
+              <Typography>No tree data available</Typography>
+            </Box>
+          )}
         </Box>
 
         {/* Details Panel */}
@@ -301,12 +329,13 @@ export const TreeView: React.FC<TreeViewProps> = ({ graphData }) => {
           sx={{
             flex: 1,
             ml: 0, // Remove margin
-            p: 2, // Add padding around the details
             backgroundColor: "background.paper",
             overflow: "auto",
           }}
         >
-          {renderDetails()}
+          {selectedNode && (
+            <NodeDetails node={selectedNode} isRootNode={isRootNode} />
+          )}
         </Box>
       </Box>
     </Box>

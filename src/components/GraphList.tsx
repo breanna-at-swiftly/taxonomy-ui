@@ -1,59 +1,68 @@
-import { Box, Paper, Typography } from "@mui/material";
-import { propertyBoxStyles } from "../styles/propertyStyles";
-// ...existing imports...
+import { useNavigate, useLocation } from "react-router-dom";
+import {
+  Box,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  Typography,
+  CircularProgress,
+} from "@mui/material";
+import { useGraphs } from "../context/GraphContext";
 
-const GraphDetails: React.FC<{ graph: GraphListItem }> = ({ graph }) => {
-  return (
-    <Paper elevation={1} sx={propertyBoxStyles.container}>
-      <Typography variant="h6" sx={propertyBoxStyles.header}>
-        Graph Details
-      </Typography>
+export const GraphList: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { graphs, isLoading } = useGraphs();
 
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        {/* Name */}
-        <Box sx={propertyBoxStyles.propertyRow}>
-          <Typography sx={propertyBoxStyles.propertyLabel}>Name</Typography>
-          <Typography sx={propertyBoxStyles.propertyValue}>
-            {graph.name}
-          </Typography>
-        </Box>
+  const handleGraphSelect = (graphId: number) => {
+    // Get current search params and update with new graphId
+    const currentParams = new URLSearchParams(location.search);
+    currentParams.set("graphId", graphId.toString());
 
-        {/* Description */}
-        <Box sx={propertyBoxStyles.propertyRow}>
-          <Typography sx={propertyBoxStyles.propertyLabel}>
-            Description
-          </Typography>
-          <Typography sx={propertyBoxStyles.propertyValue}>
-            {graph.description || "—"}
-          </Typography>
-        </Box>
+    console.log("Navigating to editor with params:", currentParams.toString());
 
-        {/* Owner */}
-        <Box sx={propertyBoxStyles.propertyRow}>
-          <Typography sx={propertyBoxStyles.propertyLabel}>Owner</Typography>
-          <Typography sx={propertyBoxStyles.propertyValue}>
-            {graph.owner}
-          </Typography>
-        </Box>
+    navigate({
+      pathname: "/editor",
+      search: currentParams.toString(),
+    });
+  };
 
-        {/* Created Date */}
-        <Box sx={propertyBoxStyles.propertyRow}>
-          <Typography sx={propertyBoxStyles.propertyLabel}>Created</Typography>
-          <Typography sx={propertyBoxStyles.propertyValue}>
-            {new Date(graph.created_date).toLocaleString()}
-          </Typography>
-        </Box>
+  // Add navigation back to editor with current params
+  const handleBackToEditor = () => {
+    navigate({
+      pathname: "/editor",
+      search: location.search, // Preserve current URL parameters
+    });
+  };
 
-        {/* Last Modified */}
-        <Box sx={propertyBoxStyles.propertyRow}>
-          <Typography sx={propertyBoxStyles.propertyLabel}>Modified</Typography>
-          <Typography sx={propertyBoxStyles.propertyValue}>
-            {new Date(graph.last_modified).toLocaleString()}
-          </Typography>
-        </Box>
+  if (isLoading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
+        <CircularProgress />
       </Box>
-    </Paper>
+    );
+  }
+
+  return (
+    <Box sx={{ width: "100%", maxWidth: 800, margin: "0 auto", p: 2 }}>
+      <Typography variant="h5" sx={{ mb: 2 }}>
+        Available Graphs
+      </Typography>
+      <List>
+        {graphs?.map((graph) => (
+          <ListItem key={graph.graph_id} disablePadding>
+            <ListItemButton onClick={() => handleGraphSelect(graph.graph_id)}>
+              <ListItemText
+                primary={graph.name}
+                secondary={`Graph ID: ${graph.graph_id}`}
+              />
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </List>
+    </Box>
   );
 };
 
-export default GraphDetails;
+export default GraphList;

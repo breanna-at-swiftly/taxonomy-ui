@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   Box,
@@ -12,42 +12,66 @@ import { useGraphExport } from "../hooks/useGraphExport";
 import type { TaxonomyGraph } from "../types/taxonomy";
 import { BANNER_COLOR } from "../theme/theme";
 import TreeView from "./TreeView";
+import { ErrorBoundary } from "./shared/ErrorBoundary/ErrorBoundary";
 
 export const GraphEditor: React.FC = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { graphs, isLoading: graphsLoading } = useGraphs();
-  const { fetchGraphData, isLoading: exportLoading, error } = useGraphExport();
+  const { fetchGraphData, isLoading: exportLoading } = useGraphExport();
+  const [graphData, setGraphData] = useState<GraphExportData | null>(null);
 
+  // Initialize selectedGraph from URL params
   const [selectedGraph, setSelectedGraph] = useState<TaxonomyGraph | null>(
-    null
+    () => {
+      const graphId = searchParams.get("graphId");
+      return null; // Let the effect handle initial selection
+    }
   );
-  const [graphData, setGraphData] = useState<any>(null);
 
+  // URL-based graph selection
   useEffect(() => {
-    // Handle graph ID from URL
     const graphId = searchParams.get("graphId");
-    if (graphId && graphs) {
+    if (graphId && graphs?.length) {
       const graph = graphs.find((g) => g.graph_id === parseInt(graphId));
-      if (graph) {
+      if (
+        graph &&
+        (!selectedGraph || selectedGraph.graph_id !== graph.graph_id)
+      ) {
+        console.log("Restoring graph selection from URL:", graph.name);
         setSelectedGraph(graph);
       }
     }
-  }, [searchParams, graphs]);
+  }, [searchParams, graphs]); // Keep clean dependency array
 
-  useEffect(() => {
-    const loadGraphData = async () => {
-      if (!selectedGraph) return;
+  // Handle graph selection
+  const handleGraphSelect = useCallback(
+    (newGraph: TaxonomyGraph | null) => {
+      console.log("Selected new graph:", newGraph?.name);
+      setSelectedGraph(newGraph);
 
-      try {
-        const data = await fetchGraphData(selectedGraph.graph_id);
-        setGraphData(data);
-      } catch (err) {
-        console.error("Failed to load graph data:", err);
+      if (newGraph) {
+        setSearchParams({ graphId: newGraph.graph_id.toString() });
+      } else {
+        setSearchParams({});
       }
-    };
+    },
+    [setSearchParams]
+  );
 
-    loadGraphData();
-  }, [selectedGraph, fetchGraphData]);
+  // Load graph data
+  useEffect(() => {
+    if (!selectedGraph) {
+      setGraphData(null);
+      return;
+    }
+
+    fetchGraphData(selectedGraph.graph_id)
+      .then((data) => {
+        console.log("Fetched new graph data:", data);
+        setGraphData(data);
+      })
+      .catch((err) => console.error("Failed to load graph data:", err));
+  }, [selectedGraph?.graph_id, fetchGraphData]);
 
   return (
     <Box
@@ -65,17 +89,21 @@ export const GraphEditor: React.FC = () => {
           borderBottom: 1,
           borderColor: "divider",
           bgcolor: BANNER_COLOR,
-          display: "flex",
-          alignItems: "center",
-          px: 2,
-          flexShrink: 0,
         }}
       >
         <Autocomplete
           value={selectedGraph}
-          onChange={(_, newValue) => setSelectedGraph(newValue)}
+          onChange={(_, newValue) => handleGraphSelect(newValue)}
           options={graphs || []}
           getOptionLabel={(option) => option.name}
+          isOptionEqualToValue={(option, value) =>
+            option.graph_id === value.graph_id
+          }
+          renderOption={(props, option) => (
+            <li {...props} key={option.graph_id}>
+              {option.name}
+            </li>
+          )}
           sx={{
             width: 300,
             "& .MuiInputBase-root": {
@@ -101,26 +129,11 @@ export const GraphEditor: React.FC = () => {
         />
       </Box>
 
-      {/* Scrollable Content Area */}
-      <Box
-        sx={{
-          flexGrow: 1,
-          overflow: "auto",
-          p: 2,
-          bgcolor: "background.paper",
-        }}
-      >
-        {exportLoading ? (
-          <CircularProgress />
-        ) : error ? (
-          <Typography color="error">{error}</Typography>
-        ) : !selectedGraph ? (
-          <Typography>Select a graph to begin editing</Typography>
-        ) : graphData ? (
-          <Box sx={{ height: 600, border: 1, borderColor: "divider" }}>
-            <TreeView graphData={graphData} />
-          </Box>
-        ) : null}
+      {/* Graph View */}
+      <Box sx={{ flex: 1, overflow: "hidden" }}>
+        <ErrorBoundary>
+          {graphData && <TreeView graphData={graphData} />}
+        </ErrorBoundary>
       </Box>
     </Box>
   );
