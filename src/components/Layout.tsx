@@ -33,7 +33,7 @@ export default function Layout() {
       }}
     >
       <AppBar
-        id="header"
+        id="app-header"
         position="fixed"
         sx={{
           backgroundColor: BANNER_COLOR,
@@ -42,11 +42,15 @@ export default function Layout() {
           zIndex: (theme) => theme.zIndex.drawer + 1,
         }}
       >
-        <Toolbar sx={{ minHeight: "48px !important" }}>
+        <Toolbar id="app-toolbar" sx={{ minHeight: "48px !important" }}>
           {/* Logo placeholder - adjust width as needed */}
-          <Box sx={{ width: 40, height: 40, mr: 2, bgcolor: "#ddd" }} />
+          <Box
+            id="logo-placeholder"
+            sx={{ width: 40, height: 40, mr: 2, bgcolor: "#ddd" }}
+          />
 
           <Typography
+            id="app-title"
             variant="h6"
             sx={{
               fontSize: "1.1rem",
@@ -59,8 +63,9 @@ export default function Layout() {
         </Toolbar>
 
         {/* Navigation Tabs */}
-        <Box sx={{ bgcolor: "white" }}>
+        <Box id="nav-tabs-container" sx={{ bgcolor: "white" }}>
           <Tabs
+            id="navigation-tabs"
             value={location.pathname}
             sx={{
               minHeight: TABS_HEIGHT,
@@ -82,12 +87,14 @@ export default function Layout() {
             }}
           >
             <Tab
+              id="graph-list-tab"
               label="Graph List"
               value="/"
               onClick={() => navigate("/")}
               sx={{ minHeight: TABS_HEIGHT }}
             />
             <Tab
+              id="graph-editor-tab"
               label="Graph Editor"
               value="/editor"
               onClick={() => navigate("/editor")}
@@ -98,10 +105,11 @@ export default function Layout() {
       </AppBar>
 
       {/* Spacer for fixed header */}
-      <Box sx={{ height: TOTAL_HEADER_HEIGHT }} />
+      <Box id="header-spacer" sx={{ height: TOTAL_HEADER_HEIGHT }} />
 
       {/* Main Content */}
       <Box
+        id="main-content"
         component="main"
         sx={{
           flexGrow: 1,
@@ -109,6 +117,7 @@ export default function Layout() {
           p: 0,
           width: "100%",
           overflow: "auto",
+          boxSizing: "border-box", // Ensure border doesn't affect layout
         }}
       >
         <Outlet context={{ isToolbar: false }} />

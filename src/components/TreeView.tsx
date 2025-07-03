@@ -21,15 +21,19 @@ import type { GraphExportData } from "../hooks/useGraphExport";
 import { PropertyBox } from "./shared/PropertyBox/PropertyBox";
 import NodeDetails from "./NodeDetails";
 import type { TreeNode } from "./NodeDetails";
+import { SplitLayout } from "./shared/SplitLayout/SplitLayout";
 
 interface TreeViewProps {
   graphData: GraphExportData;
 }
 
-export const TreeView: React.FC<TreeViewProps> = ({ graphData }) => {
+export const TreeView: React.FC<TreeViewProps> = ({
+  graphData,
+  onNodeSelect,
+  selectedNode,
+}) => {
   const treeRef = useRef(null);
   const renderCount = useRef(0); // Move useRef to component level
-  const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [treeData, setTreeData] = useState<TreeNode[]>([]);
   const [treeKey, setTreeKey] = useState(0);
@@ -53,8 +57,8 @@ export const TreeView: React.FC<TreeViewProps> = ({ graphData }) => {
     }
 
     try {
-      // Clear selected node when graph changes
-      setSelectedNode(null);
+      // Only clear selectedNode if the root node actually changes
+      // setSelectedNode(null);
 
       // Build tree structure (existing nodeMap creation code)
       const nodeMap = new Map(
@@ -114,7 +118,7 @@ export const TreeView: React.FC<TreeViewProps> = ({ graphData }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [graphData]);
+  }, [graphData?.rootNode?.node_id]);
 
   const handleExpandAll = () => {
     treeRef.current?.openAll();
@@ -137,7 +141,12 @@ export const TreeView: React.FC<TreeViewProps> = ({ graphData }) => {
     return (
       <Box
         ref={dragHandle}
-        onClick={() => setSelectedNode(node)}
+        onClick={(e) => {
+          e.stopPropagation(); // Prevent event bubbling
+          // setSelectedNode(node);
+          onNodeSelect(node);
+          console.log("Node selected:", node); // Add logging
+        }}
         sx={{
           ...style,
           display: "flex",
@@ -228,16 +237,11 @@ export const TreeView: React.FC<TreeViewProps> = ({ graphData }) => {
 
   return (
     <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        width: "100%",
-        overflow: "hidden",
-      }}
+      id="tree-view-container"
+      sx={{ display: "flex", flexDirection: "column", height: "100%" }}
     >
-      {/* Toolbar */}
       <Box
+        id="tree-view-toolbar"
         sx={{
           display: "flex",
           gap: 1,
@@ -248,96 +252,55 @@ export const TreeView: React.FC<TreeViewProps> = ({ graphData }) => {
         }}
       >
         <Tooltip title="Expand All">
-          <IconButton size="small" onClick={handleExpandAll}>
+          <IconButton
+            id="expand-all-button"
+            size="small"
+            onClick={handleExpandAll}
+          >
             <ExpandAllIcon fontSize="small" />
           </IconButton>
         </Tooltip>
         <Tooltip title="Collapse All">
-          <IconButton size="small" onClick={handleCollapseAll}>
+          <IconButton
+            id="collapse-all-button"
+            size="small"
+            onClick={handleCollapseAll}
+          >
             <CollapseAllIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       </Box>
 
-      {/* Content */}
-      <Box
-        sx={{
-          display: "flex",
-          flex: 1,
-          minHeight: 0, // Important for proper scrolling
-          overflow: "hidden",
-        }}
-      >
-        {/* Tree Panel */}
-        <Box
-          sx={{
-            width: 400,
-            flexShrink: 0,
-            borderRight: 1,
-            borderColor: "divider",
-            overflow: "auto",
-            position: "relative", // Add for spinner positioning
-          }}
-        >
-          {isLoading ? (
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100%",
-                gap: 2,
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: "rgba(255, 255, 255, 0.8)", // Semi-transparent overlay
-              }}
-            >
-              <CircularProgress
-                size={40}
-                sx={{
-                  color: "primary.main",
-                }}
-              />
-              <Typography variant="body2" color="text.secondary">
-                Loading tree data...
-              </Typography>
-            </Box>
-          ) : treeData.length > 0 ? (
-            <Tree
-              key={treeKey}
-              ref={treeRef}
-              initialData={treeData}
-              width={400}
-              height={560}
-              indent={2} // Compact tree hierarchy
-              rowHeight={32}
-            >
-              {renderNode}
-            </Tree>
-          ) : (
-            <Box sx={{ p: 2 }}>
-              <Typography>No tree data available</Typography>
-            </Box>
-          )}
-        </Box>
-
-        {/* Details Panel */}
-        <Box
-          sx={{
-            flex: 1,
-            ml: 0, // Remove margin
-            backgroundColor: "background.paper",
-            overflow: "auto",
-          }}
-        >
-          {selectedNode && (
-            <NodeDetails node={selectedNode} isRootNode={isRootNode} />
-          )}
-        </Box>
+      <Box id="tree-view-content" sx={{ position: "relative", flex: 1 }}>
+        {isLoading ? (
+          <Box
+            id="tree-view-loading"
+            sx={
+              {
+                /* ...existing styles... */
+              }
+            }
+          >
+            <CircularProgress />
+            <Typography variant="body2">Loading tree data...</Typography>
+          </Box>
+        ) : treeData.length > 0 ? (
+          <Tree
+            key={treeKey}
+            ref={treeRef}
+            initialData={treeData}
+            width={480}
+            height={560}
+            indent={2}
+            rowHeight={32}
+          >
+            {renderNode}
+          </Tree>
+        ) : (
+          <Box id="tree-view-empty" sx={{ p: 2 }}>
+            <Typography>No tree data available</Typography>
+          </Box>
+        )}
       </Box>
     </Box>
   );
