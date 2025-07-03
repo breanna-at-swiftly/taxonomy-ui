@@ -1,51 +1,48 @@
-import { Box } from "@mui/material";
 import { PropertyBox } from "./shared/PropertyBox/PropertyBox";
-import type { TreeNode } from "../types/tree";
+
+// TODO: [Data Structure] Remove double-nested data objects in tree node structure
+// Current structure: node.data.data.{properties}
+// Target structure: node.data.{properties}
+// Requires coordination with TreeView node creation and react-arborist compatibility
+
+interface TreeNode {
+  id: string;
+  children: TreeNode[];
+  parents: TreeNode[];
+  data: {
+    children: any[];
+    data: {
+      // Current nested structure we need to handle
+      name: string;
+      node_type_id?: number;
+      source_id?: string;
+      notes?: string;
+      metadata?: string;
+      inserted_datetime?: string;
+      updated_datetime?: string;
+      updated_by?: string;
+    };
+  };
+}
 
 interface NodeDetailsProps {
-  selectedNode: TreeNode | null;
+  node: TreeNode;
   isRootNode: (nodeId: string) => boolean;
 }
 
-const NodeDetails: React.FC<NodeDetailsProps> = ({
-  selectedNode,
-  isRootNode,
-}) => {
-  if (!selectedNode) return null;
-
-  const isRoot = isRootNode(selectedNode.id);
+const NodeDetails: React.FC<NodeDetailsProps> = ({ node, isRootNode }) => {
+  // Access the deeply nested data
+  const nodeData = node?.data?.data || {};
 
   const properties = [
-    {
-      label: "Name",
-      value: isRoot ? "ROOT" : selectedNode.data.name,
-    },
-    {
-      label: "Source ID",
-      value: selectedNode.data.source_id,
-    },
-    {
-      label: "Notes",
-      value: selectedNode.data.notes,
-    },
-    {
-      label: "Metadata",
-      value: selectedNode.data.metadata,
-      type: "json" as const,
-    },
+    { label: "ID", value: node?.id || "N/A" },
+    { label: "Name", value: nodeData.name || "N/A" },
+    { label: "Source ID", value: nodeData.source_id || "N/A" },
+    { label: "Notes", value: nodeData.notes || "N/A" },
+    { label: "Metadata", value: nodeData.metadata || "N/A" },
   ];
 
-  return (
-    <Box sx={{ p: 2, height: "100%", overflow: "auto" }}>
-      <PropertyBox
-        title="Node Details"
-        properties={properties.map((prop, index) => ({
-          ...prop,
-          index,
-        }))}
-      />
-    </Box>
-  );
+  return <PropertyBox title="Node Properties" properties={properties} />;
 };
 
 export default NodeDetails;

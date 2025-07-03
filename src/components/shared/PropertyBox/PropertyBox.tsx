@@ -3,6 +3,16 @@ import { propertyBoxStyles } from "../../../styles/propertyStyles";
 import PropertyRow from "./PropertyRow";
 import type { PropertyBoxProps } from "./types";
 
+interface Property {
+  label: string;
+  value: string | number;
+}
+
+interface PropertyBoxProps {
+  title: string;
+  properties: Property[];
+}
+
 export const PropertyBox: React.FC<PropertyBoxProps> = ({
   title,
   properties,

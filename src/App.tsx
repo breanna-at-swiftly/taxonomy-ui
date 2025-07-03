@@ -6,9 +6,10 @@ import { GraphProvider } from "./context/GraphContext";
 import Layout from "./components/Layout";
 import TaxonomyList from "./components/TaxonomyList";
 import GraphEditor from "./components/GraphEditor";
+import GraphList from "./components/GraphList";
 import { Box } from "@mui/material";
 
-function App() {
+export const App = () => {
   return (
     <ThemeProvider theme={theme}>
       <Box sx={{ margin: 0, padding: 0 }}>
@@ -18,6 +19,8 @@ function App() {
               <Route path="/" element={<Layout />}>
                 <Route index element={<TaxonomyList />} />
                 <Route path="editor" element={<GraphEditor />} />
+                <Route path="graphs" element={<GraphList />} />
+                {/* ...other routes... */}
               </Route>
             </Routes>
           </GraphProvider>
@@ -25,6 +28,6 @@ function App() {
       </Box>
     </ThemeProvider>
   );
-}
+};
 
 export default App;

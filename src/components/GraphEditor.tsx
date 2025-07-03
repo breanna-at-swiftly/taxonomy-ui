@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   Box,
@@ -15,47 +15,63 @@ import TreeView from "./TreeView";
 import { ErrorBoundary } from "./shared/ErrorBoundary/ErrorBoundary";
 
 export const GraphEditor: React.FC = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { graphs, isLoading: graphsLoading } = useGraphs();
   const { fetchGraphData, isLoading: exportLoading } = useGraphExport();
-
-  const [selectedGraph, setSelectedGraph] = useState<TaxonomyGraph | null>(
-    null
-  );
   const [graphData, setGraphData] = useState<GraphExportData | null>(null);
 
+  // Initialize selectedGraph from URL params
+  const [selectedGraph, setSelectedGraph] = useState<TaxonomyGraph | null>(
+    () => {
+      const graphId = searchParams.get("graphId");
+      return null; // Let the effect handle initial selection
+    }
+  );
+
+  // URL-based graph selection
   useEffect(() => {
-    // Handle graph ID from URL
     const graphId = searchParams.get("graphId");
-    if (graphId && graphs) {
+    if (graphId && graphs?.length) {
       const graph = graphs.find((g) => g.graph_id === parseInt(graphId));
-      if (graph) {
+      if (
+        graph &&
+        (!selectedGraph || selectedGraph.graph_id !== graph.graph_id)
+      ) {
+        console.log("Restoring graph selection from URL:", graph.name);
         setSelectedGraph(graph);
       }
     }
-  }, [searchParams, graphs]);
+  }, [searchParams, graphs]); // Keep clean dependency array
 
-  // Add loading state monitoring
-  useEffect(() => {
-    console.log("Graph selection changed:", selectedGraph?.name);
+  // Handle graph selection
+  const handleGraphSelect = useCallback(
+    (newGraph: TaxonomyGraph | null) => {
+      console.log("Selected new graph:", newGraph?.name);
+      setSelectedGraph(newGraph);
 
-    const loadGraphData = async () => {
-      if (!selectedGraph) {
-        setGraphData(null);
-        return;
+      if (newGraph) {
+        setSearchParams({ graphId: newGraph.graph_id.toString() });
+      } else {
+        setSearchParams({});
       }
+    },
+    [setSearchParams]
+  );
 
-      try {
-        const data = await fetchGraphData(selectedGraph.graph_id);
+  // Load graph data
+  useEffect(() => {
+    if (!selectedGraph) {
+      setGraphData(null);
+      return;
+    }
+
+    fetchGraphData(selectedGraph.graph_id)
+      .then((data) => {
         console.log("Fetched new graph data:", data);
         setGraphData(data);
-      } catch (err) {
-        console.error("Failed to load graph data:", err);
-      }
-    };
-
-    loadGraphData();
-  }, [selectedGraph, fetchGraphData]);
+      })
+      .catch((err) => console.error("Failed to load graph data:", err));
+  }, [selectedGraph?.graph_id, fetchGraphData]);
 
   return (
     <Box
@@ -77,10 +93,7 @@ export const GraphEditor: React.FC = () => {
       >
         <Autocomplete
           value={selectedGraph}
-          onChange={(_, newValue) => {
-            console.log("Selected new graph:", newValue?.name);
-            setSelectedGraph(newValue);
-          }}
+          onChange={(_, newValue) => handleGraphSelect(newValue)}
           options={graphs || []}
           getOptionLabel={(option) => option.name}
           isOptionEqualToValue={(option, value) =>

@@ -20,18 +20,7 @@ import { propertyBoxStyles } from "../styles/propertyStyles";
 import type { GraphExportData } from "../hooks/useGraphExport";
 import { PropertyBox } from "./shared/PropertyBox/PropertyBox";
 import NodeDetails from "./NodeDetails";
-
-interface TreeNode {
-  id: string;
-  name: string;
-  children?: TreeNode[];
-  data: {
-    node_type_id: number;
-    source_id: string;
-    notes: string;
-    metadata: string;
-  };
-}
+import type { TreeNode } from "./NodeDetails";
 
 interface TreeViewProps {
   graphData: GraphExportData;
@@ -73,9 +62,22 @@ export const TreeView: React.FC<TreeViewProps> = ({ graphData }) => {
           node.node_id,
           {
             id: node.node_id,
-            name: node.name,
             children: [],
-            data: node,
+            parents: [],
+            data: {
+              name: node.name, // Move name into data
+              node_type_id: node.node_type_id,
+              source_id: node.source_id,
+              notes: node.notes,
+              metadata: node.metadata,
+              inserted_datetime: node.inserted_datetime,
+              updated_datetime: node.updated_datetime,
+              updated_by: node.updated_by,
+            },
+            // These properties are required by react-arborist Tree
+            name: node.name, // Duplicate for Tree display
+            isLeaf: false, // Will be set correctly when processing links
+            isOpen: false, // Tree component manages this
           },
         ])
       );
@@ -126,8 +128,9 @@ export const TreeView: React.FC<TreeViewProps> = ({ graphData }) => {
   const isRootNode = (nodeId: string) =>
     nodeId === graphData.graph.root_node_id;
 
+  // Update renderNode to use data.name for display logic but name for rendering
   const renderNode = ({ node, style, dragHandle }) => {
-    const hasChildren = node.data.children?.length > 0;
+    const hasChildren = node.children?.length > 0;
     const isRoot = isRootNode(node.id);
     const isSelected = selectedNode?.id === node.id;
 
@@ -200,7 +203,7 @@ export const TreeView: React.FC<TreeViewProps> = ({ graphData }) => {
             textOverflow: "ellipsis",
           }}
         >
-          {isRoot ? "ROOT" : node.data.name}
+          {isRoot ? "ROOT" : node.data.name} {/* Use data.name for display */}
         </Box>
       </Box>
     );
@@ -330,7 +333,9 @@ export const TreeView: React.FC<TreeViewProps> = ({ graphData }) => {
             overflow: "auto",
           }}
         >
-          <NodeDetails selectedNode={selectedNode} isRootNode={isRootNode} />
+          {selectedNode && (
+            <NodeDetails node={selectedNode} isRootNode={isRootNode} />
+          )}
         </Box>
       </Box>
     </Box>
