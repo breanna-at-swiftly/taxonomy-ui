@@ -22,6 +22,7 @@ import { PropertyBox } from "./shared/PropertyBox/PropertyBox";
 import NodeDetails from "./NodeDetails";
 import type { TreeNode } from "./NodeDetails";
 import { SplitLayout } from "./shared/SplitLayout/SplitLayout";
+import { TreeNodeRenderer } from "./TreeNodeRenderer";
 
 interface TreeViewProps {
   graphData: GraphExportData;
@@ -289,12 +290,12 @@ export const TreeView: React.FC<TreeViewProps> = ({
             key={treeKey}
             ref={treeRef}
             initialData={treeData}
-            width={480}
+            width="100%"
             height={560}
             indent={2}
             rowHeight={32}
           >
-            {renderNode}
+            {TreeNodeRenderer}
           </Tree>
         ) : (
           <Box id="tree-view-empty" sx={{ p: 2 }}>

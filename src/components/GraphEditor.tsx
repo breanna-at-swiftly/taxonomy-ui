@@ -15,22 +15,39 @@ import TreeView from "./TreeView";
 import { ErrorBoundary } from "./shared/ErrorBoundary/ErrorBoundary";
 import { SplitLayout } from "./shared/SplitLayout/SplitLayout"; // Import directly from component file
 import { NodeDetails } from "./NodeDetails";
+import { useGraphSelection } from "../context/GraphSelectionContext"; // Adjust the import based on your project structure
 
 export const GraphEditor: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const {
+    selectedGraphId,
+    setSelectedGraphId,
+    lastViewedGraph,
+    setLastViewedGraph,
+  } = useGraphSelection();
   const { graphs, isLoading: graphsLoading } = useGraphs();
   const { fetchGraphData, isLoading: exportLoading } = useGraphExport();
+
+  // Initialize selectedGraph from URL parameter or context
   const [selectedGraph, setSelectedGraph] = useState<TaxonomyGraph | null>(
     () => {
-      const graphId = searchParams.get("graphId");
-      return null; // Let the effect handle initial selection
+      const graphId =
+        searchParams.get("graphId") || selectedGraphId?.toString();
+      if (graphId && graphs?.length) {
+        return (
+          graphs.find((g) => g.graph_id === parseInt(graphId)) ||
+          lastViewedGraph
+        );
+      }
+      return lastViewedGraph;
     }
   );
+
   const [isLoadingGraph, setIsLoadingGraph] = useState(false);
   const [graphData, setGraphData] = useState<GraphExportData | null>(null);
   const [selectedNode, setSelectedNode] = useState<NodeData | null>(null);
 
-  // URL-based graph selection
+  // Effect to handle URL-based graph selection
   useEffect(() => {
     const graphId = searchParams.get("graphId");
     if (graphId && graphs?.length) {
@@ -43,16 +60,23 @@ export const GraphEditor: React.FC = () => {
         setSelectedGraph(graph);
       }
     }
-  }, [searchParams, graphs]); // Keep clean dependency array
+  }, [searchParams, graphs]); // Keep dependency array
 
-  // Handle graph selection
+  // Update URL when graph is selected
   const handleGraphSelect = useCallback(
     async (newGraph: TaxonomyGraph | null) => {
       console.log("Selected new graph:", newGraph?.name);
 
-      // Clear tree view and selection immediately
+      // Update URL first
+      if (newGraph) {
+        setSearchParams({ graphId: newGraph.graph_id.toString() });
+      } else {
+        setSearchParams({});
+      }
+
+      // Clear existing data
       setGraphData(null);
-      setSelectedNode(null); // Add this line
+      setSelectedNode(null);
       setIsLoadingGraph(true);
       setSelectedGraph(newGraph);
 
@@ -64,7 +88,7 @@ export const GraphEditor: React.FC = () => {
         setSearchParams({});
       }
     },
-    [setSearchParams]
+    [setSearchParams, fetchGraphData]
   );
 
   // Load graph data
@@ -83,6 +107,15 @@ export const GraphEditor: React.FC = () => {
       .catch((err) => console.error("Failed to load graph data:", err))
       .finally(() => setIsLoadingGraph(false));
   }, [selectedGraph?.graph_id, fetchGraphData]);
+
+  // Update context when graph changes
+  useEffect(() => {
+    if (selectedGraph) {
+      setSelectedGraphId(selectedGraph.graph_id);
+      setLastViewedGraph(selectedGraph);
+      setSearchParams({ graphId: selectedGraph.graph_id.toString() });
+    }
+  }, [selectedGraph, setSelectedGraphId, setLastViewedGraph, setSearchParams]);
 
   return (
     <Box
@@ -162,15 +195,15 @@ export const GraphEditor: React.FC = () => {
               <Box
                 id="tree-panel-container"
                 sx={{
-                  width: 400,
+                  width: "100%", // Changed from 400 to 100%
                   flexShrink: 0,
                   borderRight: 1,
                   borderColor: "divider",
                   position: "relative",
                   display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
                   minHeight: 400,
+                  alignItems: "stretch", // Changed from center
+                  justifyContent: "stretch", // Changed from center
                 }}
               >
                 {isLoadingGraph ? (
@@ -191,13 +224,16 @@ export const GraphEditor: React.FC = () => {
                   </Box>
                 ) : null}
                 {graphData ? (
-                  <TreeView
-                    graphData={graphData}
-                    selectedNode={selectedNode}
-                    onNodeSelect={setSelectedNode}
-                  />
+                  <Box sx={{ width: "100%" }}>
+                    {" "}
+                    {/* Add wrapper to ensure full width */}
+                    <TreeView
+                      graphData={graphData}
+                      selectedNode={selectedNode}
+                      onNodeSelect={setSelectedNode}
+                    />
+                  </Box>
                 ) : (
-                  // Empty placeholder to maintain container size
                   <Box
                     id="tree-view-placeholder"
                     sx={{ width: "100%", height: "100%" }}

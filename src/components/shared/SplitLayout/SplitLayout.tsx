@@ -1,7 +1,6 @@
 import { Box } from "@mui/material";
 import Split from "react-split";
 import type { ReactNode } from "react";
-import { useEffect, useRef } from "react";
 
 interface SplitLayoutProps {
   navigation: ReactNode;
@@ -12,15 +11,13 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
   navigation,
   details,
 }) => {
-  const navigationRef = useRef<HTMLDivElement>(null);
-
   return (
     <Split
       id="split-layout-container"
       data-testid="split-layout"
       sizes={[40, 60]}
       minSize={[480, 600]}
-      expandToMin={false}
+      expandToMin={true} // Changed to true to enforce minimum sizes
       gutterSize={8}
       gutterAlign="center"
       style={{
@@ -28,6 +25,7 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
         flex: 1,
         overflow: "hidden",
         position: "relative",
+        width: "100%", // Ensure full width
       }}
     >
       {/* Navigation Panel */}
@@ -35,12 +33,13 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
         id="split-nav-panel"
         sx={{
           height: "100%",
+          width: "100%", // Ensure full width within split panel
           overflow: "auto",
           borderRight: 1,
           borderColor: "divider",
           position: "relative",
-          flex: "0 0 auto",
-          width: "100%",
+          display: "flex", // Add flex display
+          flexDirection: "column", // Stack children vertically
         }}
       >
         {navigation}
@@ -51,9 +50,10 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
         id="details-panel"
         sx={{
           height: "100%",
+          width: "100%", // Ensure full width within split panel
           overflow: "auto",
           position: "relative",
-          flex: "1 1 auto",
+          flex: 1,
         }}
       >
         {details}

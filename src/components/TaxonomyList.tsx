@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { TaxonomyGraph } from "../types/taxonomy";
 import { useGraphs } from "../context/GraphContext";
+import { useGraphSelection } from "../context/GraphSelectionContext";
 import TaxonomyDetails from "./TaxonomyDetails";
 import {
   Box,
@@ -18,14 +19,19 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import EditIcon from "@mui/icons-material/Edit";
 
 const TaxonomyList: React.FC = () => {
-  const navigate = useNavigate(); // Initialize navigate function
+  const navigate = useNavigate();
+  const { selectedGraphId, lastViewedGraph } = useGraphSelection();
   const { graphs, isLoading, error, refreshGraphs } = useGraphs();
   const [selectedGraph, setSelectedGraph] = useState<TaxonomyGraph | null>(
-    null
+    lastViewedGraph
   );
 
   const handleGraphSelect = (graph: TaxonomyGraph) => {
     setSelectedGraph(graph);
+  };
+
+  const handleEditGraph = (graph: TaxonomyGraph) => {
+    navigate(`/editor?graphId=${graph.graph_id}`);
   };
 
   return (
