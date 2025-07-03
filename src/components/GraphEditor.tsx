@@ -18,15 +18,14 @@ export const GraphEditor: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { graphs, isLoading: graphsLoading } = useGraphs();
   const { fetchGraphData, isLoading: exportLoading } = useGraphExport();
-  const [graphData, setGraphData] = useState<GraphExportData | null>(null);
-
-  // Initialize selectedGraph from URL params
   const [selectedGraph, setSelectedGraph] = useState<TaxonomyGraph | null>(
     () => {
       const graphId = searchParams.get("graphId");
       return null; // Let the effect handle initial selection
     }
   );
+  const [isLoadingGraph, setIsLoadingGraph] = useState(false);
+  const [graphData, setGraphData] = useState<GraphExportData | null>(null);
 
   // URL-based graph selection
   useEffect(() => {
@@ -45,13 +44,19 @@ export const GraphEditor: React.FC = () => {
 
   // Handle graph selection
   const handleGraphSelect = useCallback(
-    (newGraph: TaxonomyGraph | null) => {
+    async (newGraph: TaxonomyGraph | null) => {
       console.log("Selected new graph:", newGraph?.name);
+
+      // Clear tree view immediately
+      setGraphData(null);
+      setIsLoadingGraph(true);
       setSelectedGraph(newGraph);
 
       if (newGraph) {
         setSearchParams({ graphId: newGraph.graph_id.toString() });
       } else {
+        // No graph selected, clear everything
+        setIsLoadingGraph(false);
         setSearchParams({});
       }
     },
@@ -65,12 +70,14 @@ export const GraphEditor: React.FC = () => {
       return;
     }
 
+    setIsLoadingGraph(true);
     fetchGraphData(selectedGraph.graph_id)
       .then((data) => {
         console.log("Fetched new graph data:", data);
         setGraphData(data);
       })
-      .catch((err) => console.error("Failed to load graph data:", err));
+      .catch((err) => console.error("Failed to load graph data:", err))
+      .finally(() => setIsLoadingGraph(false));
   }, [selectedGraph?.graph_id, fetchGraphData]);
 
   return (
@@ -89,6 +96,9 @@ export const GraphEditor: React.FC = () => {
           borderBottom: 1,
           borderColor: "divider",
           bgcolor: BANNER_COLOR,
+          display: "flex",
+          alignItems: "center",
+          pl: 1.25, // 10px left padding
         }}
       >
         <Autocomplete
@@ -130,9 +140,48 @@ export const GraphEditor: React.FC = () => {
       </Box>
 
       {/* Graph View */}
-      <Box sx={{ flex: 1, overflow: "hidden" }}>
+      <Box sx={{ flex: 1, overflow: "hidden", display: "flex" }}>
         <ErrorBoundary>
-          {graphData && <TreeView graphData={graphData} />}
+          {/* Tree Panel with Loading State */}
+          <Box
+            sx={{
+              width: 400,
+              borderRight: 1,
+              borderColor: "divider",
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              minHeight: 400, // Add minimum height
+            }}
+          >
+            {isLoadingGraph ? (
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: "rgba(255, 255, 255, 0.8)",
+                }}
+              >
+                <CircularProgress />
+              </Box>
+            ) : null}
+            {graphData ? (
+              <TreeView graphData={graphData} />
+            ) : (
+              // Empty placeholder to maintain container size
+              <Box sx={{ width: "100%", height: "100%" }} />
+            )}
+          </Box>
+
+          {/* Details Panel remains empty until TreeView selects a node */}
+          <Box sx={{ flex: 1 }} />
         </ErrorBoundary>
       </Box>
     </Box>
