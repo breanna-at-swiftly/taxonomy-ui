@@ -1,4 +1,5 @@
 import "./App.css";
+import "./styles/split-pane.css";
 import { ThemeProvider } from "@mui/material/styles";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { theme } from "./theme/theme";

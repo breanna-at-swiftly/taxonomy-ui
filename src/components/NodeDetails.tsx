@@ -30,7 +30,10 @@ interface NodeDetailsProps {
   isRootNode: (nodeId: string) => boolean;
 }
 
-const NodeDetails: React.FC<NodeDetailsProps> = ({ node, isRootNode }) => {
+export const NodeDetails: React.FC<NodeDetailsProps> = ({
+  node,
+  isRootNode,
+}) => {
   // Access the deeply nested data
   const nodeData = node?.data?.data || {};
 
@@ -42,7 +45,13 @@ const NodeDetails: React.FC<NodeDetailsProps> = ({ node, isRootNode }) => {
     { label: "Metadata", value: nodeData.metadata || "N/A" },
   ];
 
-  return <PropertyBox title="Node Properties" properties={properties} />;
+  return (
+    <PropertyBox
+      title="Node Properties"
+      subtitle={isRootNode(node.id) ? "(Root Node)" : undefined}
+      properties={properties}
+    />
+  );
 };
 
 export default NodeDetails;
