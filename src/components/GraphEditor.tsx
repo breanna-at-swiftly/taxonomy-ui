@@ -230,13 +230,14 @@ export const GraphEditor: React.FC = () => {
                     <TreeView
                       graphData={graphData}
                       selectedNode={selectedNode}
-                      onNodeSelect={(node) => {
-                        console.log("GraphEditor - onNodeSelect:", {
-                          node,
-                          nodeData: node?.data?.data,
-                        });
-                        setSelectedNode(node); // This will now be the full TreeNode
-                      }}
+                      onNodeSelect={setSelectedNode}
+                      // onNodeSelect={(node) => {
+                      //   console.log("GraphEditor - onNodeSelect:", {
+                      //     node,
+                      //     nodeData: node?.data?.data,
+                      //   });
+                      //   setSelectedNode(node); // This will now be the full TreeNode
+                      // }}
                     />
                   </Box>
                 ) : (
