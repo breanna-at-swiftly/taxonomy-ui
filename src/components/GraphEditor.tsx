@@ -162,15 +162,21 @@ export const GraphEditor: React.FC = () => {
               <Box
                 id="tree-panel-container"
                 sx={{
-                  width: 400,
-                  flexShrink: 0,
+                  flex: 1, // Fill available space
+                  height: "100%", // Fill vertical space
+                  width: "100%", // Fill horizontal space
                   borderRight: 1,
                   borderColor: "divider",
                   position: "relative",
                   display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  minHeight: 400,
+                  flexDirection: "column",
+                  overflow: "auto",
+                  "& .react-arborist": {
+                    flex: 1, // Make tree fill container
+                    padding: "8px",
+                    width: "100% !important", // Override any internal sizing
+                    height: "100% !important",
+                  },
                 }}
               >
                 {isLoadingGraph ? (
@@ -197,10 +203,13 @@ export const GraphEditor: React.FC = () => {
                     onNodeSelect={setSelectedNode}
                   />
                 ) : (
-                  // Empty placeholder to maintain container size
                   <Box
                     id="tree-view-placeholder"
-                    sx={{ width: "100%", height: "100%" }}
+                    sx={{
+                      width: "100%",
+                      height: "100%",
+                      padding: "8px", // Match tree padding
+                    }}
                   />
                 )}
               </Box>

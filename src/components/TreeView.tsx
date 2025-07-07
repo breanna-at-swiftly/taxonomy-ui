@@ -289,7 +289,8 @@ export const TreeView: React.FC<TreeViewProps> = ({
             key={treeKey}
             ref={treeRef}
             initialData={treeData}
-            width={480}
+            // Remove fixed width, use parent container width
+            width="100%"
             height={560}
             indent={2}
             rowHeight={32}
