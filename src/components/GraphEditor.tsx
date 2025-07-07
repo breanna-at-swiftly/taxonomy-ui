@@ -45,7 +45,7 @@ export const GraphEditor: React.FC = () => {
 
   const [isLoadingGraph, setIsLoadingGraph] = useState(false);
   const [graphData, setGraphData] = useState<GraphExportData | null>(null);
-  const [selectedNode, setSelectedNode] = useState<NodeData | null>(null);
+  const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
 
   // Effect to handle URL-based graph selection
   useEffect(() => {
@@ -230,7 +230,13 @@ export const GraphEditor: React.FC = () => {
                     <TreeView
                       graphData={graphData}
                       selectedNode={selectedNode}
-                      onNodeSelect={setSelectedNode}
+                      onNodeSelect={(node) => {
+                        console.log("GraphEditor - onNodeSelect:", {
+                          node,
+                          nodeData: node?.data?.data,
+                        });
+                        setSelectedNode(node); // This will now be the full TreeNode
+                      }}
                     />
                   </Box>
                 ) : (

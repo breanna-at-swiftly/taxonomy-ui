@@ -1,52 +1,44 @@
 import { Box, Typography } from "@mui/material";
 import FolderIcon from "@mui/icons-material/Folder";
-import ImageIcon from "@mui/icons-material/Image";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { useState } from "react";
+import type { NodeRendererProps } from "react-arborist";
 import { isCategoryNode, extractCategoryImage } from "../types/nodeTypes";
+import type { TreeNode } from "../types/arborist";
 
-// Define our own props interface based on react-arborist's usage
-interface TreeNodeRendererProps {
-  node: {
-    data: {
-      data: {
-        name: string;
-        node_type_id: number;
-        metadata?: string;
-      };
-      children: any[]; // Add children to type definition
-    };
-    isOpen?: boolean;
-    toggle?: () => void;
-    isLeaf: boolean;
-    level: number;
-  };
-  style: React.CSSProperties;
-  dragHandle?: React.Ref<any>;
-  tree?: any; // Add tree reference
-}
-
-export const TreeNodeRenderer: React.FC<TreeNodeRendererProps> = ({
+// Update component definition to use correct types
+export const TreeNodeRenderer: React.FC<NodeRendererProps<TreeNode>> = ({
   node,
   style,
   dragHandle,
   tree,
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
-  const nodeData = node.data?.data || {};
+  const nodeData = node.data.data; // Access our Node data through TreeNodeData
   const metadata = nodeData.metadata;
   const nodeType = nodeData.node_type_id;
   const imageUrl = isCategoryNode(nodeType)
     ? extractCategoryImage(metadata)
     : null;
 
-  // Check actual children array
-  const hasChildren = node.data.children && node.data.children.length > 0;
+  const hasChildren = node.children && node.children.length > 0;
 
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (hasChildren && node.toggle) {
-      node.toggle();
+    if (hasChildren && tree?.toggle) {
+      tree.toggle(node); // Use tree.toggle instead of node.toggle
+    }
+  };
+
+  const handleNodeClick = (e: React.MouseEvent) => {
+    console.log("TreeNodeRenderer - handleNodeClick:", {
+      nodeId: node.id,
+      nodeName: node.name,
+      hasTreeSelect: !!tree?.select,
+    });
+
+    if (tree?.select) {
+      tree.select(node);
     }
   };
 
@@ -55,8 +47,9 @@ export const TreeNodeRenderer: React.FC<TreeNodeRendererProps> = ({
       ref={dragHandle}
       style={{
         ...style,
-        paddingLeft: `${node.level * 20}px`, // Manual indentation
+        paddingLeft: `${node.level * 20}px`,
       }}
+      onClick={handleNodeClick}
       sx={{
         display: "flex",
         alignItems: "center",
@@ -69,7 +62,6 @@ export const TreeNodeRenderer: React.FC<TreeNodeRendererProps> = ({
         },
       }}
     >
-      {/* Only show expand/collapse for nodes with actual children */}
       {hasChildren ? (
         <Box
           onClick={handleToggle}
@@ -89,7 +81,6 @@ export const TreeNodeRenderer: React.FC<TreeNodeRendererProps> = ({
         <Box sx={{ width: 24 }} />
       )}
 
-      {/* Node Icon/Image */}
       {imageUrl ? (
         <Box
           sx={{
@@ -126,7 +117,6 @@ export const TreeNodeRenderer: React.FC<TreeNodeRendererProps> = ({
         <FolderIcon sx={{ fontSize: 20 }} />
       )}
 
-      {/* Node Label */}
       <Typography
         sx={{
           fontSize: "0.875rem",

@@ -1,31 +1,29 @@
-import React, { useEffect, useRef, useState, startTransition } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  startTransition,
+} from "react";
 import { Tree } from "react-arborist";
 import {
   Box,
   CircularProgress,
   IconButton,
-  Paper,
   Tooltip,
   Typography,
 } from "@mui/material";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import FolderIcon from "@mui/icons-material/Folder";
-import FolderOpenIcon from "@mui/icons-material/FolderOpen";
-import ArticleIcon from "@mui/icons-material/Article";
 import ExpandAllIcon from "@mui/icons-material/UnfoldMore";
 import CollapseAllIcon from "@mui/icons-material/UnfoldLess";
-import HomeIcon from "@mui/icons-material/Home"; // Add this import
-import { propertyBoxStyles } from "../styles/propertyStyles";
 import type { GraphExportData } from "../hooks/useGraphExport";
-import { PropertyBox } from "./shared/PropertyBox/PropertyBox";
-import NodeDetails from "./NodeDetails";
-import type { TreeNode } from "./NodeDetails";
-import { SplitLayout } from "./shared/SplitLayout/SplitLayout";
 import { TreeNodeRenderer } from "./TreeNodeRenderer";
+import type { TreeNode } from "../types/arborist";
+import { createTreeNode } from "../types/arborist";
 
 interface TreeViewProps {
   graphData: GraphExportData;
+  onNodeSelect?: (node: TreeNode) => void; // Optional callback for node selection
+  selectedNode?: TreeNode | null; // Currently selected node
 }
 
 export const TreeView: React.FC<TreeViewProps> = ({
@@ -36,8 +34,14 @@ export const TreeView: React.FC<TreeViewProps> = ({
   const treeRef = useRef(null);
   const renderCount = useRef(0); // Move useRef to component level
   const [isLoading, setIsLoading] = useState(true);
-  const [treeData, setTreeData] = useState<TreeNode[]>([]);
   const [treeKey, setTreeKey] = useState(0);
+
+  // Transform graph nodes to TreeNodes
+  const treeData = useMemo(() => {
+    if (!graphData?.nodes) return [];
+
+    return graphData.nodes.map((node) => createTreeNode(node));
+  }, [graphData]);
 
   useEffect(() => {
     // Increment render count here
@@ -52,7 +56,6 @@ export const TreeView: React.FC<TreeViewProps> = ({
 
     if (!graphData?.nodes || !graphData?.links || !graphData?.rootNode) {
       console.warn("Missing required graph data");
-      setTreeData([]);
       setIsLoading(false);
       return;
     }
@@ -109,13 +112,11 @@ export const TreeView: React.FC<TreeViewProps> = ({
 
         // Update state updates to use imported startTransition
         startTransition(() => {
-          setTreeData([rootTreeNode]);
           setTreeKey((prev) => prev + 1);
         });
       }
     } catch (error) {
       console.error("Error building tree:", error);
-      setTreeData([]);
     } finally {
       setIsLoading(false);
     }
@@ -132,93 +133,6 @@ export const TreeView: React.FC<TreeViewProps> = ({
   // Add isRoot check function at component level
   const isRootNode = (nodeId: string) =>
     nodeId === graphData.graph.root_node_id;
-
-  // Update renderNode to use data.name for display logic but name for rendering
-  const renderNode = ({ node, style, dragHandle }) => {
-    const hasChildren = node.children?.length > 0;
-    const isRoot = isRootNode(node.id);
-    const isSelected = selectedNode?.id === node.id;
-
-    return (
-      <Box
-        ref={dragHandle}
-        onClick={(e) => {
-          e.stopPropagation(); // Prevent event bubbling
-          // setSelectedNode(node);
-          onNodeSelect(node);
-          console.log("Node selected:", node); // Add logging
-        }}
-        sx={{
-          ...style,
-          display: "flex",
-          alignItems: "center",
-          cursor: "pointer",
-          py: 0.5,
-          backgroundColor: isSelected ? "rgba(0, 0, 0, 0.08)" : "transparent",
-          "&:hover": {
-            backgroundColor: "rgba(0, 0, 0, 0.04)",
-          },
-        }}
-      >
-        {/* Expand/Collapse Arrow */}
-        <Box
-          sx={{
-            width: 24,
-            height: 24,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            visibility: hasChildren ? "visible" : "hidden",
-          }}
-          onClick={() => node.toggle()}
-        >
-          {node.isOpen ? (
-            <ExpandMoreIcon fontSize="small" />
-          ) : (
-            <ChevronRightIcon fontSize="small" />
-          )}
-        </Box>
-
-        {/* Node Type Icon */}
-        <Box
-          sx={{
-            width: 24,
-            height: 24,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: isRoot ? "primary.main" : "action.active",
-          }}
-        >
-          {isRoot ? (
-            <HomeIcon fontSize="small" />
-          ) : hasChildren ? (
-            node.isOpen ? (
-              <FolderOpenIcon fontSize="small" />
-            ) : (
-              <FolderIcon fontSize="small" />
-            )
-          ) : (
-            <ArticleIcon fontSize="small" />
-          )}
-        </Box>
-
-        {/* Node Name */}
-        <Box
-          sx={{
-            ml: 1,
-            // Update font weights to be lighter
-            fontWeight: isRoot ? 500 : node.isLeaf ? 400 : 450,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {isRoot ? "ROOT" : node.data.name}
-        </Box>
-      </Box>
-    );
-  };
 
   // Change rendering condition
   if (isLoading) {
@@ -294,6 +208,13 @@ export const TreeView: React.FC<TreeViewProps> = ({
             height={560}
             indent={2}
             rowHeight={32}
+            onSelect={(node) => {
+              console.log("3. TreeView - onSelect:", {
+                nodeId: node?.data?.id,
+                nodeName: node?.data?.name,
+              });
+              onNodeSelect?.(node);
+            }}
           >
             {TreeNodeRenderer}
           </Tree>
