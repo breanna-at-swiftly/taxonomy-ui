@@ -162,9 +162,10 @@ export const GraphEditor: React.FC = () => {
               <Box
                 id="tree-panel-container"
                 sx={{
-                  flex: 1, // Fill available space
-                  height: "100%", // Fill vertical space
-                  width: "100%", // Fill horizontal space
+                  flex: 1,
+                  height: "100%",
+                  minHeight: "100vh",
+                  width: "100%",
                   borderRight: 1,
                   borderColor: "divider",
                   position: "relative",
@@ -172,9 +173,9 @@ export const GraphEditor: React.FC = () => {
                   flexDirection: "column",
                   overflow: "auto",
                   "& .react-arborist": {
-                    flex: 1, // Make tree fill container
+                    flex: 1,
                     padding: "8px",
-                    width: "100% !important", // Override any internal sizing
+                    width: "100% !important",
                     height: "100% !important",
                   },
                 }}
@@ -208,7 +209,9 @@ export const GraphEditor: React.FC = () => {
                     sx={{
                       width: "100%",
                       height: "100%",
-                      padding: "8px", // Match tree padding
+                      minHeight: "inherit",
+                      flex: 1,
+                      padding: "8px",
                     }}
                   />
                 )}

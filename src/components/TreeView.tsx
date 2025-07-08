@@ -289,11 +289,15 @@ export const TreeView: React.FC<TreeViewProps> = ({
             key={treeKey}
             ref={treeRef}
             initialData={treeData}
-            // Remove fixed width, use parent container width
             width="100%"
             height={560}
             indent={2}
             rowHeight={32}
+            onSelect={(nodeAPI) => {
+              if (nodeAPI?.data?.data) {
+                onNodeSelect(nodeAPI.data.data);
+              }
+            }}
           >
             {renderNode}
           </Tree>
