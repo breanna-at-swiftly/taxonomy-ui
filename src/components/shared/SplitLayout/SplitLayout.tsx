@@ -12,14 +12,12 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
   navigation,
   details,
 }) => {
-  const navigationRef = useRef<HTMLDivElement>(null);
-
   return (
     <Split
       id="split-layout-container"
       data-testid="split-layout"
-      sizes={[40, 60]}
-      minSize={[480, 600]}
+      sizes={[35, 65]} // Initial split closer to 400px for left panel
+      minSize={[200, 400]} // Allow left panel to shrink to 200px
       expandToMin={false}
       gutterSize={8}
       gutterAlign="center"

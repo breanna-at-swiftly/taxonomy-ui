@@ -1,4 +1,5 @@
 import { PropertyBox } from "./shared/PropertyBox/PropertyBox";
+import { getNodeImage } from "../utils/nodeUtils";
 
 // TODO: [Data Structure] Remove double-nested data objects in tree node structure
 // Current structure: node.data.data.{properties}
@@ -34,15 +35,44 @@ export const NodeDetails: React.FC<NodeDetailsProps> = ({
   node,
   isRootNode,
 }) => {
-  // Access the deeply nested data
   const nodeData = node?.data?.data || {};
+
+  // Parse metadata string into JSON, handle potential parsing errors
+  const metadata = (() => {
+    try {
+      return nodeData.metadata ? JSON.parse(nodeData.metadata) : null;
+    } catch (e) {
+      console.warn("Failed to parse node metadata:", e);
+      return null;
+    }
+  })();
+
+  // Get image URL from parsed metadata
+  const imageUrl = metadata ? getNodeImage(metadata) : null;
 
   const properties = [
     { label: "ID", value: node?.id || "N/A" },
     { label: "Name", value: nodeData.name || "N/A" },
     { label: "Source ID", value: nodeData.source_id || "N/A" },
     { label: "Notes", value: nodeData.notes || "N/A" },
-    { label: "Metadata", value: nodeData.metadata || "N/A" },
+    {
+      label: "Metadata",
+      value:
+        imageUrl != null ? (
+          <img
+            src={imageUrl}
+            alt={nodeData.name}
+            style={{
+              maxWidth: "100%",
+              height: "auto",
+              borderRadius: 4,
+            }}
+          />
+        ) : (
+          // Show original metadata string if no image or parsing failed
+          nodeData.metadata || "N/A"
+        ),
+    },
   ];
 
   return (
