@@ -4,13 +4,15 @@ import {
   Box,
   CircularProgress,
   IconButton,
-  Paper,
+  TextField,
+  InputAdornment,
   Tooltip,
   Typography,
 } from "@mui/material";
 import ExpandAllIcon from "@mui/icons-material/UnfoldMore";
 import CollapseAllIcon from "@mui/icons-material/UnfoldLess";
 import HomeIcon from "@mui/icons-material/Home"; // Add this import
+import SearchIcon from "@mui/icons-material/Search";
 import { propertyBoxStyles } from "../styles/propertyStyles";
 import type { GraphExportData } from "../hooks/useGraphExport";
 import { PropertyBox } from "./shared/PropertyBox/PropertyBox";
@@ -33,6 +35,7 @@ export const TreeView: React.FC<TreeViewProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [treeData, setTreeData] = useState<TreeNode[]>([]);
   const [treeKey, setTreeKey] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     // Increment render count here
@@ -128,40 +131,57 @@ export const TreeView: React.FC<TreeViewProps> = ({
   const isRootNode = (nodeId: string) =>
     nodeId === graphData.graph.root_node_id;
 
+  // Keep simple search handler
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
   return (
     <Box
       id="tree-view-container"
       sx={{ display: "flex", flexDirection: "column", height: "100%" }}
     >
+      {/* Update toolbar layout */}
       <Box
         id="tree-view-toolbar"
         sx={{
           display: "flex",
-          gap: 1,
+          alignItems: "center",
+          gap: 2,
           p: 1,
           borderBottom: 1,
           borderColor: "divider",
           backgroundColor: "background.paper",
         }}
       >
-        <Tooltip title="Expand All">
-          <IconButton
-            id="expand-all-button"
-            size="small"
-            onClick={handleExpandAll}
-          >
-            <ExpandAllIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Collapse All">
-          <IconButton
-            id="collapse-all-button"
-            size="small"
-            onClick={handleCollapseAll}
-          >
-            <CollapseAllIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Tooltip title="Expand All">
+            <IconButton size="small" onClick={handleExpandAll}>
+              <ExpandAllIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Collapse All">
+            <IconButton size="small" onClick={handleCollapseAll}>
+              <CollapseAllIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
+
+        <TextField
+          fullWidth
+          size="small"
+          placeholder="Search nodes..."
+          value={searchQuery}
+          onChange={handleSearchChange}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ maxWidth: "400px" }}
+        />
       </Box>
 
       <Box id="tree-view-content" sx={{ position: "relative", flex: 1 }}>
@@ -184,7 +204,7 @@ export const TreeView: React.FC<TreeViewProps> = ({
             initialData={treeData}
             width="100%"
             height={560}
-            indent={16} 
+            indent={16}
             rowHeight={32}
             onSelect={(selectedNodes) => {
               if (selectedNodes?.[0]) {
@@ -192,6 +212,7 @@ export const TreeView: React.FC<TreeViewProps> = ({
               }
             }}
             selection="single"
+            searchTerm={searchQuery} // Use built-in search
           >
             {TreeNodeRenderer}
           </Tree>

@@ -1,4 +1,4 @@
 export const VERSION = {
-  number: "0.6",
-  label: "(POC)",
+  number: "0.75.0",
+  label: "(WIP)",
 };
