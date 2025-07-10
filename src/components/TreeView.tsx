@@ -8,11 +8,6 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import FolderIcon from "@mui/icons-material/Folder";
-import FolderOpenIcon from "@mui/icons-material/FolderOpen";
-import ArticleIcon from "@mui/icons-material/Article";
 import ExpandAllIcon from "@mui/icons-material/UnfoldMore";
 import CollapseAllIcon from "@mui/icons-material/UnfoldLess";
 import HomeIcon from "@mui/icons-material/Home"; // Add this import
@@ -22,6 +17,7 @@ import { PropertyBox } from "./shared/PropertyBox/PropertyBox";
 import NodeDetails from "./NodeDetails";
 import type { TreeNode } from "./NodeDetails";
 import { SplitLayout } from "./shared/SplitLayout/SplitLayout";
+import { TreeNodeRenderer } from "./TreeNodeRenderer";
 
 interface TreeViewProps {
   graphData: GraphExportData;
@@ -132,110 +128,6 @@ export const TreeView: React.FC<TreeViewProps> = ({
   const isRootNode = (nodeId: string) =>
     nodeId === graphData.graph.root_node_id;
 
-  // Update renderNode to use data.name for display logic but name for rendering
-  const renderNode = ({ node, style, dragHandle }) => {
-    const hasChildren = node.children?.length > 0;
-    const isRoot = isRootNode(node.id);
-    const isSelected = selectedNode?.id === node.id;
-
-    return (
-      <Box
-        ref={dragHandle}
-        onClick={(e) => {
-          e.stopPropagation(); // Prevent event bubbling
-          // setSelectedNode(node);
-          console.log("Pre Node selected:", node); // Add logging
-          onNodeSelect(node);
-          console.log("Post Node selected:", node); // Add logging
-        }}
-        sx={{
-          ...style,
-          display: "flex",
-          alignItems: "center",
-          cursor: "pointer",
-          py: 0.5,
-          backgroundColor: isSelected ? "rgba(0, 0, 0, 0.08)" : "transparent",
-          "&:hover": {
-            backgroundColor: "rgba(0, 0, 0, 0.04)",
-          },
-        }}
-      >
-        {/* Expand/Collapse Arrow */}
-        <Box
-          sx={{
-            width: 24,
-            height: 24,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            visibility: hasChildren ? "visible" : "hidden",
-          }}
-          onClick={() => node.toggle()}
-        >
-          {node.isOpen ? (
-            <ExpandMoreIcon fontSize="small" />
-          ) : (
-            <ChevronRightIcon fontSize="small" />
-          )}
-        </Box>
-
-        {/* Node Type Icon */}
-        <Box
-          sx={{
-            width: 24,
-            height: 24,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: isRoot ? "primary.main" : "action.active",
-          }}
-        >
-          {isRoot ? (
-            <HomeIcon fontSize="small" />
-          ) : hasChildren ? (
-            node.isOpen ? (
-              <FolderOpenIcon fontSize="small" />
-            ) : (
-              <FolderIcon fontSize="small" />
-            )
-          ) : (
-            <ArticleIcon fontSize="small" />
-          )}
-        </Box>
-
-        {/* Node Name */}
-        <Box
-          sx={{
-            ml: 1,
-            // Update font weights to be lighter
-            fontWeight: isRoot ? 500 : node.isLeaf ? 400 : 450,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {isRoot ? "ROOT" : node.data.name}
-        </Box>
-      </Box>
-    );
-  };
-
-  // Change rendering condition
-  if (isLoading) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100%",
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
-
   return (
     <Box
       id="tree-view-container"
@@ -292,15 +184,16 @@ export const TreeView: React.FC<TreeViewProps> = ({
             initialData={treeData}
             width="100%"
             height={560}
-            indent={2}
+            indent={16} 
             rowHeight={32}
-            onSelect={(nodeAPI) => {
-              if (nodeAPI?.data?.data) {
-                onNodeSelect(nodeAPI.data.data);
+            onSelect={(selectedNodes) => {
+              if (selectedNodes?.[0]) {
+                onNodeSelect(selectedNodes[0]);
               }
             }}
+            selection="single"
           >
-            {renderNode}
+            {TreeNodeRenderer}
           </Tree>
         ) : (
           <Box id="tree-view-empty" sx={{ p: 2 }}>
