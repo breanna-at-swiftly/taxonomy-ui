@@ -144,8 +144,9 @@ export const TreeView: React.FC<TreeViewProps> = ({
         onClick={(e) => {
           e.stopPropagation(); // Prevent event bubbling
           // setSelectedNode(node);
+          console.log("Pre Node selected:", node); // Add logging
           onNodeSelect(node);
-          console.log("Node selected:", node); // Add logging
+          console.log("Post Node selected:", node); // Add logging
         }}
         sx={{
           ...style,

@@ -5,11 +5,14 @@ export interface NodeData {
   source_id?: string;
   notes?: string;
   metadata?: string;
+  inserted_datetime: string;
+  updated_datetime: string;
+  updated_by: string;
 }
 
 export interface TreeNode {
   id: string; // Duplicate for tree operations, matches NodeData.id
   children: TreeNode[];
-  parents: TreeNode[];
+  // parents: TreeNode[];
   data: NodeData;
 }

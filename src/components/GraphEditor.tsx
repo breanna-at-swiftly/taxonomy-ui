@@ -9,7 +9,9 @@ import {
 } from "@mui/material";
 import { useGraphs } from "../context/GraphContext";
 import { useGraphExport } from "../hooks/useGraphExport";
+import type { GraphExportData } from "../hooks/useGraphExport";
 import type { TaxonomyGraph } from "../types/taxonomy";
+import type { NodeData, TreeNode } from "../types/nodes";
 import { BANNER_COLOR } from "../theme/theme";
 import TreeView from "./TreeView";
 import { ErrorBoundary } from "./shared/ErrorBoundary/ErrorBoundary";
@@ -22,7 +24,7 @@ export const GraphEditor: React.FC = () => {
   const { fetchGraphData, isLoading: exportLoading } = useGraphExport();
   const [selectedGraph, setSelectedGraph] = useState<TaxonomyGraph | null>(
     () => {
-      const graphId = searchParams.get("graphId");
+      // const graphId = searchParams.get("graphId");
       return null; // Let the effect handle initial selection
     }
   );
