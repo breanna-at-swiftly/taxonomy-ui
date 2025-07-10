@@ -1,4 +1,4 @@
-import { Box, Typography } from "@mui/material";
+import { Box, Menu, MenuItem, Typography } from "@mui/material";
 import FolderIcon from "@mui/icons-material/Folder";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import ArticleIcon from "@mui/icons-material/Article";
@@ -27,14 +27,30 @@ export const TreeNodeRenderer: React.FC<NodeRendererProps<TreeNode>> = ({
   const isSelected = tree.isSelected(node.id);
   const hasChildren = node.children && node.children.length > 0;
 
-  // Add debug logging
-  console.log("TreeNodeRenderer node:", {
-    nodeId: node.id,
-    treeRoot: tree.root,
-    isRoot: node.id === tree.root?.id,
-    nodeData: nodeData,
-    hasChildren,
-  });
+  // Add state for context menu
+  const [contextMenu, setContextMenu] = useState<{
+    mouseX: number;
+    mouseY: number;
+  } | null>(null);
+
+  // Handle right click
+  const handleContextMenu = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setContextMenu(
+      contextMenu === null
+        ? {
+            mouseX: event.clientX,
+            mouseY: event.clientY,
+          }
+        : null
+    );
+  };
+
+  // Handle menu close
+  const handleClose = () => {
+    setContextMenu(null);
+  };
 
   return (
     <Box
@@ -43,6 +59,7 @@ export const TreeNodeRenderer: React.FC<NodeRendererProps<TreeNode>> = ({
         e.stopPropagation();
         tree.select(node);
       }}
+      onContextMenu={handleContextMenu}
       style={style} // Use original style without modification
       sx={{
         display: "flex",
@@ -131,6 +148,43 @@ export const TreeNodeRenderer: React.FC<NodeRendererProps<TreeNode>> = ({
       >
         {isRoot ? "ROOT" : nodeData.name}
       </Typography>
+
+      {/* Add context menu */}
+      <Menu
+        open={contextMenu !== null}
+        onClose={handleClose}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          contextMenu !== null
+            ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
+            : undefined
+        }
+      >
+        <MenuItem
+          onClick={() => {
+            console.log("Add child to:", node.id);
+            handleClose();
+          }}
+        >
+          Add Child
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            console.log("Edit node:", node.id);
+            handleClose();
+          }}
+        >
+          Edit
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            console.log("Delete node:", node.id);
+            handleClose();
+          }}
+        >
+          Delete
+        </MenuItem>
+      </Menu>
     </Box>
   );
 };
