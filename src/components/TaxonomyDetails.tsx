@@ -10,6 +10,7 @@ const TaxonomyDetails: React.FC<TaxonomyDetailsProps> = ({ selectedGraph }) => {
   if (!selectedGraph) return null;
 
   const properties = [
+    { label: "Graph ID", value: selectedGraph.graph_id },
     { label: "Name", value: selectedGraph.name },
     { label: "Notes", value: selectedGraph.notes || "—" },
     { label: "Updated By", value: selectedGraph.updated_by },

@@ -1,21 +1,15 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useEffect,
-} from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import { taxonomyService } from "../services/taxonomyService";
-import type { TaxonomyGraph } from "../types/taxonomy";
+import type { GraphData } from "../types/taxonomy";
 
 export const GraphContext = createContext<{
-  graphs: TaxonomyGraph[];
-  isLoading: boolean;
+  graphs: GraphData[];
+  loading: boolean;
   error: Error | null;
   refreshGraphs: () => Promise<void>;
 }>({
   graphs: [],
-  isLoading: false,
+  loading: false,
   error: null,
   refreshGraphs: async () => {},
 });
@@ -23,31 +17,33 @@ export const GraphContext = createContext<{
 export const GraphProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [graphs, setGraphs] = useState<TaxonomyGraph[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [graphs, setGraphs] = useState<GraphData[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const refreshGraphs = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+  const fetchGraphs = async () => {
     try {
-      const data = await taxonomyService.fetchGraphList();
-      setGraphs(data);
+      setLoading(true);
+      const graphList = await taxonomyService.getGraphList();
+      setGraphs(graphList);
+      setError(null);
     } catch (err) {
       setError(
         err instanceof Error ? err : new Error("Failed to fetch graphs")
       );
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
-    refreshGraphs();
-  }, [refreshGraphs]);
+    fetchGraphs();
+  }, []);
 
   return (
-    <GraphContext.Provider value={{ graphs, isLoading, error, refreshGraphs }}>
+    <GraphContext.Provider
+      value={{ graphs, loading, error, refreshGraphs: fetchGraphs }}
+    >
       {children}
     </GraphContext.Provider>
   );

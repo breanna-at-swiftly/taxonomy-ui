@@ -1,5 +1,9 @@
 import { PropertyBox } from "./shared/PropertyBox/PropertyBox";
 import { getNodeImage } from "../utils/nodeUtils";
+import { ImageUploadModal } from "./ImageUploadModal";
+import { Button } from "@mui/material";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import { useState } from "react";
 
 // TODO: [Data Structure] Remove double-nested data objects in tree node structure
 // Current structure: node.data.data.{properties}
@@ -75,12 +79,35 @@ export const NodeDetails: React.FC<NodeDetailsProps> = ({
     },
   ];
 
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+
+  const handleImageUploadSuccess = (imageUrl: string) => {
+    // TODO: Update node metadata with new image URL
+    console.log("Image uploaded:", imageUrl);
+  };
+
   return (
-    <PropertyBox
-      title="Node Properties"
-      subtitle={isRootNode(node.id) ? "(Root Node)" : undefined}
-      properties={properties}
-    />
+    <>
+      <PropertyBox
+        title="Node Properties"
+        subtitle={isRootNode(node.id) ? "(Root Node)" : undefined}
+        properties={properties}
+        actions={
+          <Button
+            startIcon={<CloudUploadIcon />}
+            onClick={() => setIsUploadModalOpen(true)}
+          >
+            Upload Image
+          </Button>
+        }
+      />
+
+      <ImageUploadModal
+        open={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onSuccess={handleImageUploadSuccess}
+      />
+    </>
   );
 };
 
