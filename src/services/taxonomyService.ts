@@ -17,7 +17,27 @@ export const taxonomyService = {
 
   fetchGraphExport(graphId: number): Promise<GraphExportResponse> {
     return api
-      .get<GraphExportResponse>(`/taxonomy/graph/${graphId}/export`)
-      .then((response) => response.data);
+      .get<GraphExportResponse>("/taxonomy/graph/export", {
+        params: { graph_id: graphId },
+      })
+      .then((response) => {
+        const data = response.data;
+        // Find root node from nodes array using graph.root_node_id
+        const rootNode = data.nodes.find(
+          (node) => node.node_id === data.graph.root_node_id
+        );
+
+        if (!rootNode) {
+          throw new Error(
+            `Root node ${data.graph.root_node_id} not found in nodes`
+          );
+        }
+
+        // Return modified response with rootNode
+        return {
+          ...data,
+          rootNode,
+        };
+      });
   },
 };
