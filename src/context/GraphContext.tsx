@@ -6,10 +6,10 @@ import {
   useEffect,
 } from "react";
 import { taxonomyService } from "../services/taxonomyService";
-import type { TaxonomyGraph } from "../types/taxonomy";
+import type { Graph } from "../types/taxonomy";
 
 export const GraphContext = createContext<{
-  graphs: TaxonomyGraph[];
+  graphs: Graph[];
   isLoading: boolean;
   error: Error | null;
   refreshGraphs: () => Promise<void>;
@@ -23,7 +23,7 @@ export const GraphContext = createContext<{
 export const GraphProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [graphs, setGraphs] = useState<TaxonomyGraph[]>([]);
+  const [graphs, setGraphs] = useState<Graph[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 

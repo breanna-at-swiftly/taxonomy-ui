@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { TaxonomyGraph } from "../types/taxonomy";
+import type { Graph, GraphExportResponse } from "../types/taxonomy";
 
 const api = axios.create({
   baseURL: "/api",
@@ -9,9 +9,15 @@ const api = axios.create({
 });
 
 export const taxonomyService = {
-  fetchGraphList(): Promise<TaxonomyGraph[]> {
+  fetchGraphList(): Promise<Graph[]> {
     return api
-      .get<TaxonomyGraph[]>("/taxonomy/graph/list")
+      .get<Graph[]>("/taxonomy/graph/list")
+      .then((response) => response.data);
+  },
+
+  fetchGraphExport(graphId: number): Promise<GraphExportResponse> {
+    return api
+      .get<GraphExportResponse>(`/taxonomy/graph/${graphId}/export`)
       .then((response) => response.data);
   },
 };
