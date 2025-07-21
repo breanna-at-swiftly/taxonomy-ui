@@ -8,29 +8,55 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { useGraphs } from "../context/GraphContext";
-import { useGraphExport } from "../hooks/useGraphExport";
-import type { GraphExportData } from "../hooks/useGraphExport";
-import type { TaxonomyGraph } from "../types/taxonomy";
-import type { NodeData, TreeNode } from "../types/nodes";
+import { taxonomyService } from "../services/taxonomyService";
+import type { Graph, GraphExportResponse, Node } from "../types/taxonomy";
+
 import { BANNER_COLOR } from "../theme/theme";
 import TreeView from "./TreeView";
 import { ErrorBoundary } from "./shared/ErrorBoundary/ErrorBoundary";
 import { SplitLayout } from "./shared/SplitLayout/SplitLayout"; // Import directly from component file
 import { NodeDetails } from "./NodeDetails";
 
-export const GraphEditor: React.FC = () => {
+export const GraphEditor: React.FC<{ graphId: number }> = ({ graphId }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { graphs, isLoading: graphsLoading } = useGraphs();
-  const { fetchGraphData, isLoading: exportLoading } = useGraphExport();
-  const [selectedGraph, setSelectedGraph] = useState<TaxonomyGraph | null>(
-    () => {
-      // const graphId = searchParams.get("graphId");
-      return null; // Let the effect handle initial selection
-    }
-  );
+  const [selectedGraph, setSelectedGraph] = useState<Graph | null>(null);
   const [isLoadingGraph, setIsLoadingGraph] = useState(false);
-  const [graphData, setGraphData] = useState<GraphExportData | null>(null);
-  const [selectedNode, setSelectedNode] = useState<NodeData | null>(null);
+  const [graphData, setGraphData] = useState<GraphExportResponse | null>(null);
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+
+  // Handle graph selection
+  const handleGraphSelect = useCallback(
+    async (newGraph: Graph | null) => {
+      console.log("Selected new graph:", newGraph?.name);
+      setGraphData(null);
+      setSelectedNode(null);
+      setSelectedGraph(newGraph);
+
+      if (newGraph) {
+        setSearchParams({ graphId: newGraph.graph_id.toString() });
+        setIsLoadingGraph(true);
+        try {
+          const data = await taxonomyService.fetchGraphExport(
+            newGraph.graph_id
+          );
+          setGraphData(data);
+          setError(null);
+        } catch (err) {
+          setError(
+            err instanceof Error ? err : new Error("Failed to load graph")
+          );
+          console.error("Failed to load graph data:", err);
+        } finally {
+          setIsLoadingGraph(false);
+        }
+      } else {
+        setSearchParams({});
+      }
+    },
+    [setSearchParams]
+  );
 
   // URL-based graph selection
   useEffect(() => {
@@ -42,49 +68,14 @@ export const GraphEditor: React.FC = () => {
         (!selectedGraph || selectedGraph.graph_id !== graph.graph_id)
       ) {
         console.log("Restoring graph selection from URL:", graph.name);
-        setSelectedGraph(graph);
+        handleGraphSelect(graph);
       }
     }
-  }, [searchParams, graphs]); // Keep clean dependency array
+  }, [searchParams, graphs, handleGraphSelect]);
 
-  // Handle graph selection
-  const handleGraphSelect = useCallback(
-    async (newGraph: TaxonomyGraph | null) => {
-      console.log("Selected new graph:", newGraph?.name);
-
-      // Clear tree view and selection immediately
-      setGraphData(null);
-      setSelectedNode(null); // Add this line
-      setIsLoadingGraph(true);
-      setSelectedGraph(newGraph);
-
-      if (newGraph) {
-        setSearchParams({ graphId: newGraph.graph_id.toString() });
-      } else {
-        // No graph selected, clear everything
-        setIsLoadingGraph(false);
-        setSearchParams({});
-      }
-    },
-    [setSearchParams]
-  );
-
-  // Load graph data
-  useEffect(() => {
-    if (!selectedGraph) {
-      setGraphData(null);
-      return;
-    }
-
-    setIsLoadingGraph(true);
-    fetchGraphData(selectedGraph.graph_id)
-      .then((data) => {
-        console.log("Fetched new graph data:", data);
-        setGraphData(data);
-      })
-      .catch((err) => console.error("Failed to load graph data:", err))
-      .finally(() => setIsLoadingGraph(false));
-  }, [selectedGraph?.graph_id, fetchGraphData]);
+  if (isLoadingGraph) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+  if (!graphData) return <div>No data available</div>;
 
   return (
     <Box

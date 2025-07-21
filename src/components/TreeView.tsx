@@ -14,7 +14,7 @@ import CollapseAllIcon from "@mui/icons-material/UnfoldLess";
 import HomeIcon from "@mui/icons-material/Home"; // Add this import
 import SearchIcon from "@mui/icons-material/Search";
 import { propertyBoxStyles } from "../styles/propertyStyles";
-import type { GraphExportData } from "../hooks/useGraphExport";
+import type { GraphExportResponse, Node } from "../types/taxonomy";
 import { PropertyBox } from "./shared/PropertyBox/PropertyBox";
 import NodeDetails from "./NodeDetails";
 import type { TreeNode } from "./NodeDetails";
@@ -22,7 +22,9 @@ import { SplitLayout } from "./shared/SplitLayout/SplitLayout";
 import { TreeNodeRenderer } from "./TreeNodeRenderer";
 
 interface TreeViewProps {
-  graphData: GraphExportData;
+  graphData: GraphExportResponse;
+  onNodeSelect: (node: Node) => void;
+  selectedNode: Node | null;
 }
 
 export const TreeView: React.FC<TreeViewProps> = ({
