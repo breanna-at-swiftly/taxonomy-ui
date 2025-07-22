@@ -26,6 +26,16 @@ export const GraphEditor: React.FC<{ graphId: number }> = ({ graphId }) => {
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [error, setError] = useState<Error | null>(null);
 
+  // Add debug logging for graphs data
+  useEffect(() => {
+    console.log("GraphEditor - Graphs state updated:", {
+      graphsLoading,
+      graphsCount: graphs?.length,
+      graphs,
+      timestamp: new Date().toISOString(),
+    });
+  }, [graphs, graphsLoading]);
+
   // Handle graph selection
   const handleGraphSelect = useCallback(
     async (newGraph: Graph | null) => {
@@ -73,10 +83,6 @@ export const GraphEditor: React.FC<{ graphId: number }> = ({ graphId }) => {
     }
   }, [searchParams, graphs, handleGraphSelect]);
 
-  if (isLoadingGraph) return <div>Loading...</div>;
-  if (error) return <div>Error: {error.message}</div>;
-  if (!graphData) return <div>No data available</div>;
-
   return (
     <Box
       id="graph-editor-container"
@@ -88,7 +94,7 @@ export const GraphEditor: React.FC<{ graphId: number }> = ({ graphId }) => {
         position: "relative",
       }}
     >
-      {/* Fixed Toolbar */}
+      {/* Fixed Toolbar - Always render this */}
       <Box
         id="graph-editor-toolbar"
         sx={{
@@ -105,6 +111,7 @@ export const GraphEditor: React.FC<{ graphId: number }> = ({ graphId }) => {
           value={selectedGraph}
           onChange={(_, newValue) => handleGraphSelect(newValue)}
           options={graphs || []}
+          loading={graphsLoading}
           getOptionLabel={(option) => option.name}
           isOptionEqualToValue={(option, value) =>
             option.graph_id === value.graph_id
@@ -139,7 +146,7 @@ export const GraphEditor: React.FC<{ graphId: number }> = ({ graphId }) => {
         />
       </Box>
 
-      {/* Graph View */}
+      {/* Conditional rendering for graph content */}
       <Box
         id="graph-view"
         sx={{
@@ -149,91 +156,98 @@ export const GraphEditor: React.FC<{ graphId: number }> = ({ graphId }) => {
           minWidth: 0,
         }}
       >
-        <ErrorBoundary>
-          <SplitLayout
-            navigation={
-              <Box
-                id="tree-panel-container"
-                sx={{
-                  flex: 1,
-                  height: "100%",
-                  minHeight: "100vh",
-                  width: "100%",
-                  borderRight: 1,
-                  borderColor: "divider",
-                  position: "relative",
-                  display: "flex",
-                  flexDirection: "column",
-                  overflow: "auto",
-                  "& .react-arborist": {
+        {error ? (
+          <div>Error: {error.message}</div>
+        ) : !graphData && !isLoadingGraph ? (
+          <div>Select a graph to view</div>
+        ) : (
+          <ErrorBoundary>
+            <SplitLayout
+              navigation={
+                <Box
+                  id="tree-panel-container"
+                  sx={{
                     flex: 1,
-                    padding: "8px",
-                    width: "100% !important",
-                    height: "100% !important",
-                  },
-                }}
-              >
-                {isLoadingGraph ? (
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      backgroundColor: "rgba(255, 255, 255, 0.8)",
-                    }}
-                  >
-                    <CircularProgress />
-                  </Box>
-                ) : null}
-                {graphData ? (
-                  <TreeView
-                    graphData={graphData}
-                    selectedNode={selectedNode}
-                    onNodeSelect={setSelectedNode}
-                  />
-                ) : (
-                  <Box
-                    id="tree-view-placeholder"
-                    sx={{
-                      width: "100%",
-                      height: "100%",
-                      minHeight: "inherit",
+                    height: "100%",
+                    minHeight: "100vh",
+                    width: "100%",
+                    borderRight: 1,
+                    borderColor: "divider",
+                    position: "relative",
+                    display: "flex",
+                    flexDirection: "column",
+                    overflow: "auto",
+                    "& .react-arborist": {
                       flex: 1,
                       padding: "8px",
-                    }}
-                  />
-                )}
-              </Box>
-            }
-            details={
-              <Box
-                id="details-panel"
-                sx={{
-                  flex: 1,
-                  minWidth: 0, // Prevent overflow
-                }}
-              >
-                {selectedNode ? (
-                  <NodeDetails
-                    node={selectedNode}
-                    isRootNode={(nodeId) =>
-                      nodeId === graphData?.rootNode?.node_id
-                    }
-                  />
-                ) : (
-                  <Typography color="text.secondary">
-                    Select a node to view details
-                  </Typography>
-                )}
-              </Box>
-            }
-          />
-        </ErrorBoundary>
+                      width: "100% !important",
+                      height: "100% !important",
+                    },
+                  }}
+                >
+                  {isLoadingGraph && (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backgroundColor: "rgba(255, 255, 255, 0.8)",
+                        zIndex: 1,
+                      }}
+                    >
+                      <CircularProgress />
+                    </Box>
+                  )}
+                  {graphData ? (
+                    <TreeView
+                      graphData={graphData}
+                      selectedNode={selectedNode}
+                      onNodeSelect={setSelectedNode}
+                    />
+                  ) : (
+                    <Box
+                      id="tree-view-placeholder"
+                      sx={{
+                        width: "100%",
+                        height: "100%",
+                        minHeight: "inherit",
+                        flex: 1,
+                        padding: "8px",
+                      }}
+                    />
+                  )}
+                </Box>
+              }
+              details={
+                <Box
+                  id="details-panel"
+                  sx={{
+                    flex: 1,
+                    minWidth: 0, // Prevent overflow
+                  }}
+                >
+                  {selectedNode ? (
+                    <NodeDetails
+                      node={selectedNode}
+                      isRootNode={(nodeId) =>
+                        nodeId === graphData?.rootNode?.node_id
+                      }
+                    />
+                  ) : (
+                    <Typography color="text.secondary">
+                      Select a node to view details
+                    </Typography>
+                  )}
+                </Box>
+              }
+            />
+          </ErrorBoundary>
+        )}
       </Box>
     </Box>
   );
