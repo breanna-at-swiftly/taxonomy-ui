@@ -32,12 +32,15 @@ export const TreeView: React.FC<TreeViewProps> = ({
   onNodeSelect,
   selectedNode,
 }) => {
-  const treeRef = useRef(null);
+  const treeRef = useRef<any>(null); // TODO: Add proper type from react-arborist
   const renderCount = useRef(0); // Move useRef to component level
   const [isLoading, setIsLoading] = useState(true);
   const [treeData, setTreeData] = useState<TreeNode[]>([]);
   const [treeKey, setTreeKey] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Add wasSearching ref to track search state
+  const wasSearchingRef = useRef(false);
 
   useEffect(() => {
     // Increment render count here
@@ -133,10 +136,52 @@ export const TreeView: React.FC<TreeViewProps> = ({
   const isRootNode = (nodeId: string) =>
     nodeId === graphData.graph.root_node_id;
 
-  // Keep simple search handler
+  // Update search change handler to track search state
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+    const newValue = e.target.value;
+    if (newValue) {
+      wasSearchingRef.current = true;
+    }
+    setSearchQuery(newValue);
   };
+
+  // Simplify clear handler to just clear search
+  const handleClearSearch = () => {
+    setSearchQuery("");
+  };
+
+  // Add effect to handle returning to unfiltered state
+  useEffect(() => {
+    if (!searchQuery && wasSearchingRef.current) {
+      wasSearchingRef.current = false;
+      setTreeKey((k) => k + 1);
+
+      if (selectedNode?.id && treeRef.current) {
+        setTimeout(() => {
+          const treeNode = treeRef.current.get(selectedNode.id);
+          if (treeNode) {
+            // Open parents first
+            treeNode.openParents();
+            // Use the Tree's selection method
+            treeRef.current.select(treeNode);
+
+            // Find and scroll
+            const treeContainer = treeRef.current.element;
+            const nodeElement = treeContainer.querySelector(
+              `[data-id="${selectedNode.id}"]`
+            );
+            if (nodeElement && treeContainer) {
+              nodeElement.scrollIntoView({
+                block: "center",
+                behavior: "smooth",
+                scrollMode: "if-needed",
+              });
+            }
+          }
+        }, 150);
+      }
+    }
+  }, [searchQuery, selectedNode]);
 
   return (
     <Box
@@ -186,7 +231,7 @@ export const TreeView: React.FC<TreeViewProps> = ({
                 <InputAdornment position="end">
                   <IconButton
                     aria-label="clear search"
-                    onClick={() => setSearchQuery("")}
+                    onClick={handleClearSearch} // Use new handler
                     edge="end"
                     size="small"
                   >
