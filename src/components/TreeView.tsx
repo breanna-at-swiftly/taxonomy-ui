@@ -12,7 +12,7 @@ import {
 import ExpandAllIcon from "@mui/icons-material/UnfoldMore";
 import CollapseAllIcon from "@mui/icons-material/UnfoldLess";
 import HomeIcon from "@mui/icons-material/Home"; // Add this import
-import SearchIcon from "@mui/icons-material/Search";
+import { Clear as ClearIcon, Search as SearchIcon } from "@mui/icons-material";
 import { propertyBoxStyles } from "../styles/propertyStyles";
 import type { GraphExportResponse, Node } from "../types/taxonomy";
 import { PropertyBox } from "./shared/PropertyBox/PropertyBox";
@@ -181,6 +181,19 @@ export const TreeView: React.FC<TreeViewProps> = ({
                 <SearchIcon fontSize="small" />
               </InputAdornment>
             ),
+            endAdornment:
+              searchQuery.length > 0 ? (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="clear search"
+                    onClick={() => setSearchQuery("")}
+                    edge="end"
+                    size="small"
+                  >
+                    <ClearIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ) : null,
           }}
           sx={{ maxWidth: "400px" }}
         />
