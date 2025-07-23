@@ -1,5 +1,9 @@
 import axios from "axios";
-import type { Graph, GraphExportResponse } from "../types/taxonomy";
+import type {
+  Graph,
+  GraphExportResponse,
+  BannerGraph,
+} from "../types/taxonomy";
 
 const api = axios.create({
   baseURL: "/api",
@@ -39,5 +43,18 @@ export const taxonomyService = {
           rootNode,
         };
       });
+  },
+
+  async fetchBannerGraphs(params?: {
+    graph_id?: number;
+    graph_purpose_id?: number;
+  }): Promise<BannerGraph[]> {
+    const response = await api.get<BannerGraph[]>(
+      "/taxonomy/banner-graph/get",
+      {
+        params,
+      }
+    );
+    return response.data;
   },
 };

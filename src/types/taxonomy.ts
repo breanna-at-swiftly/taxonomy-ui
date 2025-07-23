@@ -48,3 +48,21 @@ export interface GraphExportResponse {
   links: Link[];
   rootNode: Node;
 }
+
+export interface BannerGraph {
+  banner_graph_id: number;
+  banner_id: string;
+  tenant_id: string;
+  banner_name: string;
+  graph_id: number;
+  graph_name: string;
+  node_id: string | null;
+  graph_purpose_id: number;
+  graph_purpose_name: string;
+  graph_status_id: number;
+  graph_status_name: string;
+  published_datetime: string | null;
+  inserted_datetime: string;
+  updated_datetime: string;
+  updated_by: string;
+}
