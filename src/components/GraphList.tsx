@@ -1,3 +1,4 @@
+import { useState, useEffect, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Box,
@@ -8,12 +9,34 @@ import {
   Typography,
   CircularProgress,
 } from "@mui/material";
-import { useGraphs } from "../context/GraphContext";
+import type { BannerGraph } from "../types/taxonomy";
+import { taxonomyService } from "../services/taxonomyService";
+import TaxonomyDetails from "./TaxonomyDetails";
+import { BannerGraphDetails } from "./BannerGraphDetails";
+import { GraphContext } from "../context/GraphContext";
 
-export const GraphList: React.FC = () => {
+export function GraphList() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { graphs, isLoading } = useGraphs();
+  const { graphs, selectedGraph, setSelectedGraph, isLoading } =
+    useContext(GraphContext);
+  const [bannerGraph, setBannerGraph] = useState<BannerGraph | null>(null);
+
+  useEffect(() => {
+    if (selectedGraph) {
+      taxonomyService
+        .fetchBannerGraphs({
+          graph_id: selectedGraph.graph_id,
+          graph_purpose_id: 3,
+        })
+        .then((bannerGraphs) => {
+          setBannerGraph(bannerGraphs[0] || null);
+        })
+        .catch(console.error);
+    } else {
+      setBannerGraph(null);
+    }
+  }, [selectedGraph]);
 
   const handleGraphSelect = (graphId: number) => {
     // Get current search params and update with new graphId
@@ -52,7 +75,12 @@ export const GraphList: React.FC = () => {
       <List>
         {graphs?.map((graph) => (
           <ListItem key={graph.graph_id} disablePadding>
-            <ListItemButton onClick={() => handleGraphSelect(graph.graph_id)}>
+            <ListItemButton
+              onClick={() => {
+                setSelectedGraph(graph);
+                handleGraphSelect(graph.graph_id);
+              }}
+            >
               <ListItemText
                 primary={graph.name}
                 secondary={`Graph ID: ${graph.graph_id}`}
@@ -61,8 +89,12 @@ export const GraphList: React.FC = () => {
           </ListItem>
         ))}
       </List>
+      <div className="details-section">
+        <TaxonomyDetails selectedGraph={selectedGraph} />
+        <BannerGraphDetails bannerGraph={bannerGraph} />
+      </div>
     </Box>
   );
-};
+}
 
 export default GraphList;

@@ -1,9 +1,9 @@
 import { Box } from "@mui/material";
 import { PropertyBox } from "./shared/PropertyBox/PropertyBox";
-import type { TaxonomyGraph } from "../types/taxonomy";
+import type { Graph } from "../types/taxonomy";
 
 interface TaxonomyDetailsProps {
-  selectedGraph: TaxonomyGraph | null;
+  selectedGraph: Graph | null;
 }
 
 const TaxonomyDetails: React.FC<TaxonomyDetailsProps> = ({ selectedGraph }) => {
@@ -23,6 +23,7 @@ const TaxonomyDetails: React.FC<TaxonomyDetailsProps> = ({ selectedGraph }) => {
       value: selectedGraph.updated_datetime,
       type: "date" as const,
     },
+    { label: "Graph ID", value: selectedGraph.graph_id.toString() },
   ];
 
   return (

@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import type { TaxonomyGraph } from "../types/taxonomy";
+import type { Graph, BannerGraph } from "../types/taxonomy";
 import { useGraphs } from "../context/GraphContext";
 import TaxonomyDetails from "./TaxonomyDetails";
+import { BannerGraphDetails } from "./BannerGraphDetails";
+import { taxonomyService } from "../services/taxonomyService";
 import {
   Box,
   Paper,
@@ -18,13 +20,32 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import EditIcon from "@mui/icons-material/Edit";
 
 const TaxonomyList: React.FC = () => {
-  const navigate = useNavigate(); // Initialize navigate function
+  const navigate = useNavigate();
   const { graphs, isLoading, error, refreshGraphs } = useGraphs();
-  const [selectedGraph, setSelectedGraph] = useState<TaxonomyGraph | null>(
-    null
-  );
+  const [selectedGraph, setSelectedGraph] = useState<Graph | null>(null);
+  const [bannerGraph, setBannerGraph] = useState<BannerGraph | null>(null);
+  const [isBannerLoading, setIsBannerLoading] = useState(false); // Loading state for banner graph
 
-  const handleGraphSelect = (graph: TaxonomyGraph) => {
+  useEffect(() => {
+    // Clear banner graph immediately when selection changes
+    setBannerGraph(null);
+
+    if (selectedGraph) {
+      setIsBannerLoading(true);
+      taxonomyService
+        .fetchBannerGraphs({
+          graph_id: selectedGraph.graph_id,
+          graph_purpose_id: 3,
+        })
+        .then((bannerGraphs) => {
+          setBannerGraph(bannerGraphs[0] || null);
+        })
+        .catch(console.error)
+        .finally(() => setIsBannerLoading(false));
+    }
+  }, [selectedGraph]);
+
+  const handleGraphSelect = (graph: Graph) => {
     setSelectedGraph(graph);
   };
 
@@ -168,11 +189,46 @@ const TaxonomyList: React.FC = () => {
         <Paper
           elevation={1}
           sx={{
-            height: 500,
+            minHeight: 500, // Changed from fixed height to minHeight
             overflow: "auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+            p: 2,
           }}
         >
           <TaxonomyDetails selectedGraph={selectedGraph} />
+
+          {/* Banner Graph Section with State Handling */}
+          {selectedGraph && (
+            <>
+              {isBannerLoading ? (
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    p: 2,
+                  }}
+                >
+                  <CircularProgress size={24} />
+                </Box>
+              ) : bannerGraph ? (
+                <BannerGraphDetails
+                  bannerGraph={bannerGraph}
+                  onEdit={() =>
+                    navigate(`/editor?graphId=${bannerGraph.graph_id}`)
+                  }
+                />
+              ) : (
+                <Box sx={{ p: 2 }}>
+                  <Typography color="text.secondary">
+                    No banner graph associated with this taxonomy graph
+                  </Typography>
+                </Box>
+              )}
+            </>
+          )}
         </Paper>
       </Box>
     </Box>
