@@ -7,6 +7,17 @@
       "name": "Debug React App",
       "url": "http://localhost:5173", // Make sure this port is correct
       "webRoot": "${workspaceFolder}"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Vitest Tests",
+      "autoAttachChildProcesses": true,
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceRoot}/node_modules/vitest/vitest.mjs",
+      "args": ["run", "${relativeFile}"],
+      "smartStep": true,
+      "console": "integratedTerminal"
     }
   ]
 }
