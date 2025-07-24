@@ -9,11 +9,11 @@ import {
   Typography,
   CircularProgress,
 } from "@mui/material";
-import { BannerGraph } from "../types/taxonomy";
+import type { BannerGraph } from "../types/taxonomy";
 import { taxonomyService } from "../services/taxonomyService";
-import { GraphDetails } from "./GraphDetails";
+import TaxonomyDetails from "./TaxonomyDetails";
 import { BannerGraphDetails } from "./BannerGraphDetails";
-import { GraphContext } from "../contexts/GraphContext";
+import { GraphContext } from "../context/GraphContext";
 
 export function GraphList() {
   const navigate = useNavigate();
@@ -90,7 +90,7 @@ export function GraphList() {
         ))}
       </List>
       <div className="details-section">
-        <GraphDetails graph={selectedGraph} />
+        <TaxonomyDetails selectedGraph={selectedGraph} />
         <BannerGraphDetails bannerGraph={bannerGraph} />
       </div>
     </Box>
