@@ -14,6 +14,8 @@ export interface Graph {
 
 export interface Node {
   node_id: string;
+  graph_id: number; // Added required property
+  name: string; // Added required property
   node_type_id?: number;
   source_id?: string;
   notes?: string;
