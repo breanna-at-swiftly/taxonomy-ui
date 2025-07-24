@@ -5,9 +5,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { theme } from "./theme/theme";
 import { GraphProvider } from "./context/GraphContext";
 import Layout from "./components/Layout";
-import TaxonomyList from "./components/TaxonomyList";
+import GraphList from "./components/GraphList"; // Updated import
 import GraphEditor from "./components/GraphEditor";
-import GraphList from "./components/GraphList";
 import { Box } from "@mui/material";
 
 export const App = () => {
@@ -18,9 +17,8 @@ export const App = () => {
           <GraphProvider>
             <Routes>
               <Route path="/" element={<Layout />}>
-                <Route index element={<TaxonomyList />} />
+                <Route index element={<GraphList />} />
                 <Route path="editor" element={<GraphEditor />} />
-                <Route path="graphs" element={<GraphList />} />
                 {/* ...other routes... */}
               </Route>
             </Routes>
