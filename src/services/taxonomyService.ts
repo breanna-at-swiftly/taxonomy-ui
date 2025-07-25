@@ -13,6 +13,36 @@ const api = axios.create({
   },
 });
 
+// Add request/response interceptors for debugging
+api.interceptors.request.use((request) => {
+  console.log("API Request:", {
+    url: request.url,
+    method: request.method,
+    data: request.data,
+    baseURL: request.baseURL,
+  });
+  return request;
+});
+
+api.interceptors.response.use(
+  (response) => {
+    console.log("API Response:", {
+      status: response.status,
+      data: response.data,
+      url: response.config.url,
+    });
+    return response;
+  },
+  (error) => {
+    console.error("API Error:", {
+      status: error.response?.status,
+      message: error.message,
+      url: error.config?.url,
+    });
+    return Promise.reject(error);
+  }
+);
+
 interface NodeGetParams {
   node_id?: string;
   graph_id?: number;
@@ -94,7 +124,39 @@ export const taxonomyService = {
    * @returns Promise<Node> Updated node details
    */
   async updateNode(node: Node): Promise<Node> {
-    const { data } = await api.post<Node>("/taxonomy/node/update", node);
-    return data;
+    // Log the outgoing request
+    console.log("UpdateNode Request:", {
+      url: "/taxonomy/node/update",
+      payload: node,
+    });
+
+    try {
+      const response = await api.post<Node>("/taxonomy/node/update", node);
+      // console.log("calling node/update");
+      // const body = '{ "node_id": "something" }';
+      // const response = await api.post("/taxonomy/node/update", body);
+
+      // Log the response
+      console.log("UpdateNode Response:", {
+        status: response.status,
+        data: response.data || "(empty)",
+      });
+
+      if (!response.data) {
+        throw new Error("Empty response data received");
+      }
+
+      return response.data;
+    } catch (error) {
+      // Enhanced error logging
+      if (axios.isAxiosError(error)) {
+        console.error("UpdateNode Error:", {
+          url: error.config?.url,
+          status: error.response?.status,
+          data: error.response?.data,
+        });
+      }
+      throw error;
+    }
   },
 };

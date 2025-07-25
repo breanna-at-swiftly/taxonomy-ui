@@ -72,6 +72,8 @@ export const TreeView: React.FC<TreeViewProps> = ({
             children: [],
             parents: [],
             data: {
+              node_id: node.node_id, // Ensure node_id is included
+              graph_id: node.graph_id, // Ensure graph_id is included
               name: node.name, // Move name into data
               node_type_id: node.node_type_id,
               source_id: node.source_id,
