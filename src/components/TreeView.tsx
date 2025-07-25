@@ -11,14 +11,13 @@ import {
 } from "@mui/material";
 import ExpandAllIcon from "@mui/icons-material/UnfoldMore";
 import CollapseAllIcon from "@mui/icons-material/UnfoldLess";
-import HomeIcon from "@mui/icons-material/Home"; // Add this import
+
 import { Clear as ClearIcon, Search as SearchIcon } from "@mui/icons-material";
-import { propertyBoxStyles } from "../styles/propertyStyles";
+
 import type { GraphExportResponse, Node } from "../types/taxonomy";
-import { PropertyBox } from "./shared/PropertyBox/PropertyBox";
-import NodeDetails from "./NodeDetails";
-import type { TreeNode } from "./NodeDetails";
-import { SplitLayout } from "./shared/SplitLayout/SplitLayout";
+
+import type { TaxonomyTreeNode } from "./NodeDetails";
+
 import { TreeNodeRenderer } from "./TreeNodeRenderer";
 
 interface TreeViewProps {
@@ -35,7 +34,7 @@ export const TreeView: React.FC<TreeViewProps> = ({
   const treeRef = useRef<any>(null); // TODO: Add proper type from react-arborist
   const renderCount = useRef(0); // Move useRef to component level
   const [isLoading, setIsLoading] = useState(true);
-  const [treeData, setTreeData] = useState<TreeNode[]>([]);
+  const [treeData, setTreeData] = useState<TaxonomyTreeNode[]>([]);
   const [treeKey, setTreeKey] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
 

@@ -1,5 +1,5 @@
 import { Box, TextField, Typography, Select, MenuItem } from "@mui/material";
-import { PropertyItem, SelectOption } from "./types";
+import type { PropertyItem, SelectOption, PropertyType } from "./types";
 import { formatDate } from "../../../utils/dateUtils";
 
 interface PropertyRowProps extends PropertyItem {
@@ -96,6 +96,17 @@ const PropertyRow: React.FC<PropertyRowProps> = ({
           />
         );
 
+      case "image":
+        return (
+          <TextField
+            size="small"
+            fullWidth
+            value={value ?? ""}
+            onChange={(e) => handleChange(e.target.value)}
+            placeholder="Enter image URL"
+          />
+        );
+
       default:
         return (
           <TextField
@@ -123,6 +134,24 @@ const PropertyRow: React.FC<PropertyRowProps> = ({
       case "select":
         return options?.find((opt) => opt.id === value)?.label ?? value;
 
+      case "image":
+        return value ? (
+          <Box>
+            <Typography sx={{ mb: 1 }}>{value}</Typography>
+            <img
+              src={value as string}
+              alt="Preview"
+              style={{
+                maxWidth: "100%",
+                height: "auto",
+                borderRadius: 4,
+              }}
+            />
+          </Box>
+        ) : (
+          "—"
+        );
+
       default:
         return value;
     }
@@ -131,18 +160,50 @@ const PropertyRow: React.FC<PropertyRowProps> = ({
   return (
     <Box
       sx={{
-        display: "grid",
-        gridTemplateColumns: "minmax(120px, 30%) 1fr",
-        gap: 2,
-        alignItems: "center",
-        bgcolor: rowIndex % 2 === 0 ? "background.default" : "background.paper",
+        display: "flex",
+        flexDirection: "row",
         p: 1,
+        backgroundColor:
+          rowIndex % 2 === 0 ? "transparent" : "rgba(128, 0, 32, 0.03)",
+        borderRadius: 1,
+        width: "100%",
+        minHeight: 32,
       }}
     >
-      <Typography variant="subtitle2" color="text.secondary">
+      <Typography
+        sx={{
+          width: 120,
+          flexShrink: 0,
+          fontSize: "0.75rem",
+          textTransform: "uppercase",
+          letterSpacing: "0.05em",
+          color: "text.secondary",
+          textAlign: "left",
+          pt: 0.5,
+        }}
+      >
         {label}
       </Typography>
-      {isEditing ? renderEditControl() : renderViewValue()}
+
+      {isEditing ? (
+        <Box sx={{ flex: 1, pl: 2 }}>{renderEditControl()}</Box>
+      ) : (
+        <Typography
+          component="div" // Changed from 'p' to 'div'
+          sx={{
+            flex: 1,
+            fontSize: "0.875rem",
+            pl: 2,
+            m: 0,
+            textAlign: "left",
+            whiteSpace: "normal",
+            wordBreak: "break-word",
+            fontFamily: type === "json" ? "monospace" : "inherit",
+          }}
+        >
+          {renderViewValue() || "—"}
+        </Typography>
+      )}
     </Box>
   );
 };

@@ -4,7 +4,8 @@ export type PropertyType =
   | "date"
   | "number"
   | "multiline"
-  | "select";
+  | "select"
+  | "image"; // Add new type
 
 export interface SelectOption {
   id: string | number;
