@@ -42,6 +42,21 @@ export interface Link {
 }
 
 /**
+ * API Request/Response types
+ */
+export interface NodeCreateRequest {
+  graph_id: number;
+  nodes: Node[];
+  link?: Link;
+  no_links?: boolean;
+}
+
+export interface NodeCreateResponse {
+  nodes: Node[];
+  links?: Link[];
+}
+
+/**
  * API Response types
  */
 export interface GraphExportResponse {

@@ -4,6 +4,8 @@ import type {
   GraphExportResponse,
   BannerGraph,
   Node,
+  NodeCreateRequest,
+  NodeCreateResponse,
 } from "../types/taxonomy";
 
 const api = axios.create({
@@ -156,6 +158,38 @@ export const taxonomyService = {
           data: error.response?.data,
         });
       }
+      throw error;
+    }
+  },
+
+  /**
+   * Create one or more nodes in a graph with optional linking
+   * @param request Contains graph_id, nodes to create, optional link info, and linking behavior
+   * @returns Promise containing created nodes and any generated links
+   */
+  async createNodes(request: NodeCreateRequest): Promise<NodeCreateResponse> {
+    console.log("Creating nodes:", {
+      graphId: request.graph_id,
+      nodeCount: request.nodes.length,
+      hasLink: !!request.link,
+      noLinks: request.no_links,
+    });
+
+    try {
+      const response = await api.post<NodeCreateResponse>(
+        "/taxonomy/node/create",
+        request
+      );
+
+      console.log("Node creation response:", {
+        status: response.status,
+        nodesCreated: response.data.nodes.length,
+        linksCreated: response.data.links?.length ?? 0,
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error("Failed to create nodes:", error);
       throw error;
     }
   },
