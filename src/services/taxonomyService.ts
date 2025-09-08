@@ -3,6 +3,9 @@ import type {
   Graph,
   GraphExportResponse,
   BannerGraph,
+  Node,
+  NodeCreateRequest,
+  NodeCreateResponse,
 } from "../types/taxonomy";
 
 const api = axios.create({
@@ -11,6 +14,42 @@ const api = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+// Add request/response interceptors for debugging
+api.interceptors.request.use((request) => {
+  console.log("API Request:", {
+    url: request.url,
+    method: request.method,
+    data: request.data,
+    baseURL: request.baseURL,
+  });
+  return request;
+});
+
+api.interceptors.response.use(
+  (response) => {
+    console.log("API Response:", {
+      status: response.status,
+      data: response.data,
+      url: response.config.url,
+    });
+    return response;
+  },
+  (error) => {
+    console.error("API Error:", {
+      status: error.response?.status,
+      message: error.message,
+      url: error.config?.url,
+    });
+    return Promise.reject(error);
+  }
+);
+
+interface NodeGetParams {
+  node_id?: string;
+  graph_id?: number;
+  source_id?: string;
+}
 
 export const taxonomyService = {
   fetchGraphList(): Promise<Graph[]> {
@@ -56,5 +95,102 @@ export const taxonomyService = {
       }
     );
     return response.data;
+  },
+
+  /**
+   * Get a node by either node_id or graph_id + source_id combination
+   * @param params NodeGetParams
+   * @returns Promise<Node>
+   * @throws Error if neither node_id nor (graph_id + source_id) are provided
+   */
+  async getNode(params: NodeGetParams): Promise<Node> {
+    if (!params.node_id && !(params.graph_id && params.source_id)) {
+      throw new Error(
+        "Either node_id or both graph_id and source_id must be provided"
+      );
+    }
+
+    const { data } = await api.get<Node>("/taxonomy/node/get", {
+      params: {
+        node_id: params.node_id,
+        graph_id: params.graph_id,
+        source_id: params.source_id,
+      },
+    });
+    return data;
+  },
+
+  /**
+   * Update a taxonomy node
+   * @param node Node object containing all fields to update
+   * @returns Promise<Node> Updated node details
+   */
+  async updateNode(node: Node): Promise<Node> {
+    // Log the outgoing request
+    console.log("UpdateNode Request:", {
+      url: "/taxonomy/node/update",
+      payload: node,
+    });
+
+    try {
+      const response = await api.post<Node>("/taxonomy/node/update", node);
+      // console.log("calling node/update");
+      // const body = '{ "node_id": "something" }';
+      // const response = await api.post("/taxonomy/node/update", body);
+
+      // Log the response
+      console.log("UpdateNode Response:", {
+        status: response.status,
+        data: response.data || "(empty)",
+      });
+
+      if (!response.data) {
+        throw new Error("Empty response data received");
+      }
+
+      return response.data;
+    } catch (error) {
+      // Enhanced error logging
+      if (axios.isAxiosError(error)) {
+        console.error("UpdateNode Error:", {
+          url: error.config?.url,
+          status: error.response?.status,
+          data: error.response?.data,
+        });
+      }
+      throw error;
+    }
+  },
+
+  /**
+   * Create one or more nodes in a graph with optional linking
+   * @param request Contains graph_id, nodes to create, optional link info, and linking behavior
+   * @returns Promise containing created nodes and any generated links
+   */
+  async createNodes(request: NodeCreateRequest): Promise<NodeCreateResponse> {
+    console.log("Creating nodes:", {
+      graphId: request.graph_id,
+      nodeCount: request.nodes.length,
+      hasLink: !!request.link,
+      noLinks: request.no_links,
+    });
+
+    try {
+      const response = await api.post<NodeCreateResponse>(
+        "/taxonomy/node/create",
+        request
+      );
+
+      console.log("Node creation response:", {
+        status: response.status,
+        nodesCreated: response.data.nodes.length,
+        linksCreated: response.data.links?.length ?? 0,
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error("Failed to create nodes:", error);
+      throw error;
+    }
   },
 };

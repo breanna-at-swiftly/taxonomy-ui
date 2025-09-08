@@ -14,6 +14,8 @@ export interface Graph {
 
 export interface Node {
   node_id: string;
+  graph_id: number; // Added required property
+  name: string; // Added required property
   node_type_id?: number;
   source_id?: string;
   notes?: string;
@@ -37,6 +39,21 @@ export interface Link {
   valid_from_datetime?: string;
   valid_until_datetime?: string;
   is_disabled: boolean;
+}
+
+/**
+ * API Request/Response types
+ */
+export interface NodeCreateRequest {
+  graph_id: number;
+  nodes: Node[];
+  link?: Link;
+  no_links?: boolean;
+}
+
+export interface NodeCreateResponse {
+  nodes: Node[];
+  links?: Link[];
 }
 
 /**

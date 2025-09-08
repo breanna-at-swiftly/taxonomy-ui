@@ -9,7 +9,8 @@ import {
 } from "@mui/material";
 import { useGraphs } from "../context/GraphContext";
 import { taxonomyService } from "../services/taxonomyService";
-import type { Graph, GraphExportResponse, Node } from "../types/taxonomy";
+import type { Graph, GraphExportResponse } from "../types/taxonomy";
+import type { TaxonomyTreeNode } from "./NodeDetails"; // Add 'type' to import
 
 import { BANNER_COLOR } from "../theme/theme";
 import TreeView from "./TreeView";
@@ -23,7 +24,9 @@ export const GraphEditor: React.FC<{ graphId: number }> = ({ graphId }) => {
   const [selectedGraph, setSelectedGraph] = useState<Graph | null>(null);
   const [isLoadingGraph, setIsLoadingGraph] = useState(false);
   const [graphData, setGraphData] = useState<GraphExportResponse | null>(null);
-  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [selectedNode, setSelectedNode] = useState<TaxonomyTreeNode | null>(
+    null
+  );
   const [error, setError] = useState<Error | null>(null);
 
   // Add debug logging for graphs data
@@ -233,7 +236,7 @@ export const GraphEditor: React.FC<{ graphId: number }> = ({ graphId }) => {
                 >
                   {selectedNode ? (
                     <NodeDetails
-                      node={selectedNode}
+                      node={selectedNode} // Here we're passing the wrong data structure
                       isRootNode={(nodeId) =>
                         nodeId === graphData?.rootNode?.node_id
                       }
