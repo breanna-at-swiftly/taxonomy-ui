@@ -15,6 +15,21 @@ const api = axios.create({
   },
 });
 
+export const setupAxiosAuth = (
+  getAccessTokenSilently: () => Promise<string>
+) => {
+  api.interceptors.request.use(async (config) => {
+    try {
+      const token = await getAccessTokenSilently();
+      console.log("Attaching JWT:", token); // Debug log
+      config.headers.Authorization = `Bearer ${token}`;
+    } catch (error) {
+      console.error("Error attaching JWT:", error);
+    }
+    return config;
+  });
+};
+
 // Add request/response interceptors for debugging
 api.interceptors.request.use((request) => {
   console.log("API Request:", {

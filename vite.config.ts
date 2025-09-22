@@ -36,7 +36,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "https://swiftly-data-api-prod.azure-api.net/v1.0",
+        target: "https://swiftly-data-api-prod.azure-api.net/proxy/v1.0",
         changeOrigin: true,
         secure: false,
         agent: new HttpsProxyAgent.HttpsProxyAgent("http://127.0.0.1:8888"),
@@ -48,7 +48,7 @@ export default defineConfig({
           return path.replace(/^\/api/, "");
         },
         headers: {
-          "api-key": "520ec25092c54b7db747908ef65c86ec",
+          //"api-key": "520ec25092c54b7db747908ef65c86ec",
           "Content-Type": "application/json",
           Accept: "application/json",
         },
