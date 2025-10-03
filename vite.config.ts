@@ -6,14 +6,15 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "https://swiftly-data-api-prod.azure-api.net/v1.0",
+        // 1. Target the new dev proxy endpoint
+        target: "https://swiftly-data-api-dev.azure-api.net/proxy/v1.0",
         changeOrigin: true,
         secure: false,
         rewrite: (path) => {
           return path.replace(/^\/api/, "");
         },
         headers: {
-          "api-key": "520ec25092c54b7db747908ef65c86ec",
+          // 2. REMOVED api-key, as the proxy uses JWT authentication
           "Content-Type": "application/json",
           Accept: "application/json",
         },
