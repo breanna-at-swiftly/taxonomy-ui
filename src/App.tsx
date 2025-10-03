@@ -8,8 +8,21 @@ import Layout from "./components/Layout";
 import GraphList from "./components/GraphList"; // Updated import
 import GraphEditor from "./components/GraphEditor";
 import { Box } from "@mui/material";
+import { useEffect } from "react";
+import { useStubAuth } from "./StubAuthProvider"; // Import the stub hook
+import { setupAuthInterceptor } from "./services/taxonomyService"; // Import the interceptor setup function
 
 export const App = () => {
+  // Use our stub hook instead of useAuth0
+  const { isAuthenticated, getAccessTokenSilently } = useStubAuth();
+
+  // This effect runs once and sets up the interceptor for all future API calls
+  useEffect(() => {
+    if (isAuthenticated) {
+      setupAuthInterceptor(getAccessTokenSilently);
+    }
+  }, [isAuthenticated, getAccessTokenSilently]);
+
   return (
     <ThemeProvider theme={theme}>
       <Box sx={{ margin: 0, padding: 0 }}>

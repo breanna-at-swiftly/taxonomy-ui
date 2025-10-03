@@ -194,3 +194,26 @@ export const taxonomyService = {
     }
   },
 };
+
+/**
+ * Sets up an Axios interceptor to automatically add the
+ * Authorization header to every outgoing request.
+ * @param getAccessTokenSilently A function that returns a promise resolving to the JWT.
+ */
+export const setupAuthInterceptor = (
+  getAccessTokenSilently: () => Promise<string>
+) => {
+  api.interceptors.request.use(
+    async (config) => {
+      const token = await getAccessTokenSilently();
+      // --- ADD THIS LOG ---
+      console.log("Axios Interceptor: Attaching Authorization header.");
+      // console.log(`token: ${token}`);
+      config.headers.Authorization = token;
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
+    }
+  );
+};
